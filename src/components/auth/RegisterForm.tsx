@@ -32,12 +32,6 @@ const RegisterForm: React.FC<{
     try {
       await register(email, password, name);
       if (onClose) onClose();
-      
-      // En mode développement, nous fermons la modale après l'inscription réussie
-      if (onSwitchToLogin) {
-        // En production, on pourrait passer au login, mais en développement on peut fermer directement
-        onClose?.();
-      }
     } catch (error: any) {
       // La plupart des erreurs sont gérées dans le contexte Auth
     } finally {

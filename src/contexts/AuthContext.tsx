@@ -134,12 +134,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.message === "Email not confirmed") {
           // Tentative de récupération du user_id sans confirmation d'email
           const { data: userData } = await supabase
-            .from('auth.users')
-            .select('id')
+            .from('users')
+            .select('id, email')
             .eq('email', email)
             .single();
 
           if (userData) {
+            // Créer manuellement un profil utilisateur pour le mode développement
+            const devProfile: UserProfile = {
+              id: userData.id || `dev-${Date.now()}`,
+              email: email,
+              name: email.split('@')[0] || 'Utilisateur',
+              addresses: [],
+              favorites: []
+            };
+            
+            // Mettre à jour l'état d'authentification manuellement
+            setCurrentUser(devProfile);
+            
             toast({
               title: "Connexion réussie",
               description: "Vous êtes maintenant connecté à votre compte. (Mode développement: email non confirmé)"
@@ -157,6 +169,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       // Si l'erreur est "Email not confirmed", on permet quand même la connexion en mode dev
       if (error.message === "Email not confirmed") {
+        // Créer un profil utilisateur temporaire pour le mode développement
+        const devProfile: UserProfile = {
+          id: `dev-${Date.now()}`,
+          email: email,
+          name: email.split('@')[0] || 'Utilisateur',
+          addresses: [],
+          favorites: []
+        };
+        
+        // Mettre à jour l'état d'authentification manuellement
+        setCurrentUser(devProfile);
+        
         toast({
           title: "Info connexion",
           description: "En mode développement, votre compte est considéré comme connecté même sans confirmation d'email."
@@ -185,18 +209,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             name,
           },
-          emailRedirectTo: window.location.origin + '/auth/callback',
-          // Désactiver la confirmation d'email en mode développement
-          emailConfirmationURL: undefined
+          emailRedirectTo: window.location.origin + '/auth/callback'
         }
       });
 
       if (error) throw error;
 
       // En mode développement, considérer l'utilisateur comme inscrit immédiatement
+      // Créer un profil utilisateur temporaire
+      const devProfile: UserProfile = {
+        id: `dev-${Date.now()}`,
+        email: email,
+        name: name || email.split('@')[0] || 'Utilisateur',
+        addresses: [],
+        favorites: []
+      };
+      
+      // Mettre à jour l'état d'authentification manuellement
+      setCurrentUser(devProfile);
+      
       toast({
         title: "Inscription réussie",
-        description: "Votre compte a été créé avec succès. Vous pouvez vous connecter immédiatement."
+        description: "Votre compte a été créé avec succès. Vous êtes maintenant connecté."
       });
     } catch (error: any) {
       console.error('Erreur d\'inscription:', error);
@@ -212,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await supabase.auth.signOut();
+      setCurrentUser(null);
       toast({
         title: "Déconnexion réussie",
         description: "Vous avez été déconnecté de votre compte."
