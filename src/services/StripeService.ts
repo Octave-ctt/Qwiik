@@ -17,7 +17,7 @@ export interface CheckoutSessionResponse {
 
 export const StripeService = {
   /**
-   * Crée une session de checkout Stripe
+   * Crée une session de checkout Stripe via la fonction Edge Supabase
    */
   createCheckoutSession: async (items: CartItem[], userId: string): Promise<CheckoutSessionResponse> => {
     // Formater les produits pour Stripe
@@ -27,6 +27,9 @@ export const StripeService = {
         product_data: {
           name: product.name,
           images: [product.image],
+          metadata: {
+            productId: product.id
+          }
         },
         unit_amount: Math.round(product.price * 100), // Prix en centimes
       },
@@ -34,13 +37,18 @@ export const StripeService = {
     }));
     
     try {
-      // Appeler directement l'URL correcte de la fonction Edge Supabase
-      console.log('Appel direct de la fonction Edge Supabase pour créer une session Stripe');
+      console.log('Appel de la fonction Edge Supabase pour créer une session Stripe');
+      console.log('URL fonction:', SUPABASE_FUNCTION_URL);
       
       // Récupérer le token d'accès de l'utilisateur connecté
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token || '';
       
+      if (!accessToken) {
+        console.warn('Aucun token d\'accès disponible pour l\'authentification');
+      }
+      
+      // Configurer la requête
       const response = await fetch(SUPABASE_FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -52,13 +60,31 @@ export const StripeService = {
           userId,
           successUrl: `${window.location.origin}/payment/success`,
           cancelUrl: `${window.location.origin}/cart`,
+          metadata: {
+            items: items.map(item => ({
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity
+            }))
+          }
         }),
+        // Ajouter ces options pour améliorer la compatibilité
+        mode: 'cors',
+        credentials: 'include'
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Erreur réponse fonction:', errorData);
-        throw new Error(`Erreur HTTP ${response.status}: ${errorData.error || response.statusText}`);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { message: errorText };
+        }
+        
+        console.error('Erreur réponse fonction Supabase:', errorData);
+        throw new Error(`Erreur HTTP ${response.status}: ${errorData.error || errorData.message || response.statusText}`);
       }
       
       const data = await response.json();
@@ -71,6 +97,21 @@ export const StripeService = {
       return data;
     } catch (error) {
       console.error('Erreur Stripe:', error);
+      
+      // En mode développement, offrir une simulation si l'API est inaccessible
+      if (import.meta.env.DEV || window.location.hostname === 'localhost') {
+        console.warn('Mode développement: utilisation de la simulation de paiement');
+        
+        // Redirection vers la page de paiement avec paramètre de simulation
+        const simulationSessionId = `sim_${Date.now()}`;
+        const simulationUrl = `${window.location.origin}/checkout?simulation=true&session_id=${simulationSessionId}`;
+        
+        return {
+          sessionId: simulationSessionId,
+          url: simulationUrl
+        };
+      }
+      
       throw error;
     }
   },
@@ -79,7 +120,6 @@ export const StripeService = {
    * Redirige l'utilisateur vers la page de paiement Stripe
    */
   redirectToCheckout: async (sessionId: string): Promise<void> => {
-    // En production, rediriger vers Stripe
     try {
       const stripe = await stripePromise;
       if (!stripe) {
@@ -104,7 +144,6 @@ export const StripeService = {
    */
   updateOrderStatus: async (orderId: string, status: 'completed' | 'cancelled'): Promise<void> => {
     try {
-      // En production, mettre à jour la commande dans Supabase
       const { error } = await supabase
         .from('orders')
         .update({ status })

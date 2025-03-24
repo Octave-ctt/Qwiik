@@ -33,31 +33,14 @@ serve(async (req) => {
     // Initialiser le client Supabase pour récupérer la clé Stripe
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Tenter de récupérer la clé Stripe depuis les variables d'environnement ou Supabase
+    // Tenter de récupérer la clé Stripe depuis les variables d'environnement
     let secretKey = STRIPE_SECRET_KEY;
     
     if (!secretKey) {
-      console.log("Récupération de la clé Stripe depuis la table secrets");
-      const { data: secretData, error: secretError } = await supabase
-        .from('secrets')
-        .select('value')
-        .eq('name', 'STRIPE_SECRET_KEY')
-        .single();
-
-      if (secretError) {
-        console.error("Erreur lors de la récupération de la clé:", secretError.message);
-        throw new Error("Impossible de récupérer la clé Stripe");
-      }
-      
-      if (secretData) {
-        secretKey = secretData.value;
-        console.log("Clé Stripe récupérée avec succès");
-      }
-    }
-    
-    // Vérifier qu'une clé a été trouvée
-    if (!secretKey) {
-      throw new Error("Aucune clé Stripe trouvée. Veuillez configurer STRIPE_SECRET_KEY dans les variables d'environnement ou dans la table secrets.");
+      console.error("ERREUR: Clé Stripe manquante dans les variables d'environnement");
+      throw new Error("Configuration Stripe manquante. Veuillez définir STRIPE_SECRET_KEY dans les variables d'environnement.");
+    } else {
+      console.log("Clé Stripe trouvée dans les variables d'environnement");
     }
 
     // Initialiser Stripe avec la clé récupérée
@@ -66,6 +49,9 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
+    console.log("Création d'une session Stripe");
+    console.log("Produits:", lineItems.length);
+    
     // Extraire les informations des articles pour la base de données
     const orderItems = lineItems.map(item => ({
       product_id: item.price_data?.product_data?.metadata?.productId,
@@ -91,9 +77,12 @@ serve(async (req) => {
       },
     });
 
+    console.log("Session Stripe créée avec succès:", session.id);
+
     // En cas de succès, enregistrer la commande dans Supabase si un userId est fourni
     if (userId) {
       try {
+        console.log("Enregistrement de la commande pour l'utilisateur:", userId);
         // Créer une nouvelle commande
         const { data: orderData, error: orderError } = await supabase
           .from("orders")
@@ -110,10 +99,10 @@ serve(async (req) => {
 
         if (orderError) {
           console.error("Erreur lors de l'enregistrement de la commande:", orderError);
-          throw orderError;
-        }
-
-        if (orderData && orderData.id) {
+          // On continue même si l'enregistrement échoue
+        } else if (orderData && orderData.id) {
+          console.log("Commande enregistrée avec l'ID:", orderData.id);
+          
           // Enregistrer les éléments de la commande
           const orderItemsWithOrderId = orderItems.map(item => ({
             order_id: orderData.id,
@@ -129,7 +118,7 @@ serve(async (req) => {
           if (itemsError) {
             console.error("Erreur lors de l'enregistrement des articles de commande:", itemsError);
           } else {
-            console.log("Commande et articles enregistrés avec succès");
+            console.log("Articles de commande enregistrés avec succès");
           }
         }
       } catch (orderError) {
