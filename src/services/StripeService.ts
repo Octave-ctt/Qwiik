@@ -1,8 +1,9 @@
+
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 
-// Utiliser la clé publique Stripe depuis les variables d'environnement
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_mock_key_for_development';
+// Utiliser la clé publique Stripe depuis les variables d'environnement ou la variable globale
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_test_mock_key_for_development';
 const stripePromise = loadStripe(stripePublicKey);
 
 export interface CheckoutSessionResponse {
