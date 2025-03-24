@@ -13,22 +13,21 @@ interface FavoriteButtonProps {
 }
 
 const FavoriteButton = ({ productId, className }: FavoriteButtonProps) => {
-  const auth = useContext(AuthContext);
-  const user = auth?.currentUser;
+  const { currentUser, isAuthenticated } = useContext(AuthContext);
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated && currentUser) {
       setIsFavorite(FavoritesService.isFavorite(productId));
     }
-  }, [productId, user]);
+  }, [productId, isAuthenticated, currentUser]);
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) {
+    if (!isAuthenticated || !currentUser) {
       toast({
         title: "Connexion requise",
         description: "Vous devez être connecté pour ajouter des favoris.",

@@ -1,10 +1,18 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import FavoritesService from "@/services/FavoritesService";
-import { formatPrice } from "@/lib/utils";
+import { AuthContext } from "@/contexts/AuthContext";
 import { Heart } from "lucide-react";
+
+// Format price helper function
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(price);
+};
 
 // Mock function to get all products (temporary solution)
 const getAllProducts = async () => {
@@ -38,9 +46,15 @@ const getAllProducts = async () => {
 const FavoritesPage = () => {
   const [favoritesProducts, setFavoritesProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
     const loadFavorites = async () => {
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+      
       const favoriteIds = FavoritesService.getFavorites();
       const allProducts = await getAllProducts();
       
@@ -53,7 +67,7 @@ const FavoritesPage = () => {
     };
     
     loadFavorites();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleRemoveFavorite = (productId: string) => {
     FavoritesService.toggleFavorite(productId);
@@ -70,6 +84,21 @@ const FavoritesPage = () => {
         </CardHeader>
         <CardContent>
           <p>Chargement de vos favoris...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center text-lg">
+            <Heart className="mr-2" size={20} />Mes favoris
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Vous devez être connecté pour voir vos favoris.</p>
         </CardContent>
       </Card>
     );
