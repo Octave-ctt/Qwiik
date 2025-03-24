@@ -1,20 +1,33 @@
 
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
+import { AuthContext } from '../contexts/AuthContext';
 import { StripeService } from '../services/StripeService';
 import { Button } from '@/components/ui/button';
 
 const CartPage = () => {
   const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useContext(CartContext);
+  const { currentUser, isAuthenticated } = useContext(AuthContext);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const handleRemoveItem = (productId: string) => {
-    removeFromCart(productId);
+  // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+  useEffect(() => {
+    if (!isAuthenticated && !currentUser) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour accéder à votre panier."
+      });
+      navigate('/');
+    }
+  }, [isAuthenticated, currentUser, navigate, toast]);
+  
+  const handleRemoveItem = async (productId: string) => {
+    await removeFromCart(productId);
     
     toast({
       title: "Produit retiré",
@@ -23,29 +36,34 @@ const CartPage = () => {
   };
   
   const handleStripeCheckout = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour effectuer un achat."
+      });
+      return;
+    }
+    
     try {
       setIsProcessing(true);
       
-      // En production, ceci appellerait votre backend
-      // Pour le développement, nous simulons la réponse
-      const { url, sessionId } = await StripeService.simulateBackendCheckout(cartItems);
+      const { url, sessionId } = await StripeService.createCheckoutSession(cartItems, currentUser.id);
       
-      // En production, ceci redirigerait vers Stripe
-      // Pour la démo, nous simulons une redirection et un retour
       toast({
         title: "Redirection vers Stripe...",
         description: "Vous allez être redirigé vers la page de paiement"
       });
       
-      // Simuler une redirection
-      setTimeout(() => {
-        // En développement, rediriger directement vers la page de succès pour simuler
-        navigate(`/payment/success?session_id=${sessionId}&success=true`);
-        setIsProcessing(false);
-      }, 1500);
-      
-      // En production, ce code serait utilisé à la place :
-      // await StripeService.redirectToCheckout(sessionId);
+      // En développement, simuler la redirection
+      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
+        setTimeout(() => {
+          navigate(`/payment/success?session_id=${sessionId}`);
+          setIsProcessing(false);
+        }, 1500);
+      } else {
+        // En production, rediriger vers Stripe
+        await StripeService.redirectToCheckout(sessionId);
+      }
       
     } catch (error) {
       setIsProcessing(false);
@@ -61,6 +79,14 @@ const CartPage = () => {
   const subtotal = getCartTotal();
   const deliveryFee = subtotal >= 35 ? 0 : 4.99;
   const total = subtotal + deliveryFee;
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="page-container py-8 animate-fade-in text-center">
+        <h1 className="text-2xl font-bold mb-4">Chargement du panier...</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container py-8 animate-fade-in">
@@ -102,7 +128,7 @@ const CartPage = () => {
                   </Link>
                   
                   <p className="text-gray-500 text-sm mb-2">
-                    Livraison en {product.deliveryTime}
+                    Livraison en {product.deliveryTime || '30 minutes'}
                   </p>
                   
                   <div className="flex items-center justify-between">

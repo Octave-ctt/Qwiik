@@ -1,108 +1,205 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { User } from '../utils/data';
+import { supabase } from '../lib/supabase';
+import { Session, User } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  addresses: any[];
+  favorites: string[];
+}
 
 interface AuthContextType {
-  currentUser: User | null;
-  user: User | null; // Adding for compatibility with existing code
+  currentUser: UserProfile | null;
+  user: UserProfile | null; // Pour compatibilité avec le code existant
+  session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   user: null,
+  session: null,
   loading: true,
   login: async () => {},
   register: async () => {},
-  logout: () => {},
+  logout: async () => {},
   isAuthenticated: false
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('currentUser');
+    // Vérifier la session actuelle
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    });
+
+    // Configurer l'écouteur pour les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      // Vérifier si un profil existe déjà pour cet utilisateur
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      // Si le profil existe, l'utiliser
+      if (profiles) {
+        setCurrentUser({
+          id: profiles.id,
+          email: user?.email || '',
+          name: profiles.name || '',
+          addresses: profiles.addresses || [],
+          favorites: profiles.favorites || []
+        });
+      } else {
+        // Sinon, créer un profil par défaut
+        const newProfile = {
+          id: userId,
+          email: user?.email || '',
+          name: user?.email?.split('@')[0] || 'Utilisateur',
+          addresses: [],
+          favorites: []
+        };
+        
+        // Créer le profil dans la base de données
+        await supabase.from('profiles').upsert([{
+          id: userId,
+          name: newProfile.name,
+          addresses: [],
+          favorites: []
+        }]);
+        
+        setCurrentUser(newProfile);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer votre profil.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const login = async (email: string, password: string) => {
-    // In a real app, this would call an API
-    // For demo, we'll just check if the user exists in localStorage
-    const usersJson = localStorage.getItem('users') || '[]';
-    const users = JSON.parse(usersJson);
-    
-    const user = users.find((u: any) => u.email === email);
-    if (!user) {
-      throw new Error('User not found');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté à votre compte."
+      });
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      toast({
+        title: "Erreur de connexion",
+        description: error.message || "Échec de la connexion. Veuillez réessayer.",
+        variant: "destructive"
+      });
+      throw error;
     }
-    
-    if (user.password !== password) {
-      throw new Error('Incorrect password');
-    }
-    
-    // Remove password before storing in state/localStorage
-    const { password: _, ...safeUser } = user;
-    setCurrentUser(safeUser);
-    localStorage.setItem('currentUser', JSON.stringify(safeUser));
   };
 
   const register = async (email: string, password: string, name: string) => {
-    // In a real app, this would call an API
-    const usersJson = localStorage.getItem('users') || '[]';
-    const users = JSON.parse(usersJson);
-    
-    if (users.some((u: any) => u.email === email)) {
-      throw new Error('Email already in use');
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Inscription réussie",
+        description: "Votre compte a été créé avec succès."
+      });
+    } catch (error: any) {
+      console.error('Erreur d\'inscription:', error);
+      toast({
+        title: "Erreur d'inscription",
+        description: error.message || "Échec de l'inscription. Veuillez réessayer.",
+        variant: "destructive"
+      });
+      throw error;
     }
-    
-    const newUser = {
-      id: `u${Date.now()}`,
-      email,
-      name,
-      password,
-      addresses: [],
-      favorites: []
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    // Remove password before storing in state/localStorage
-    const { password: _, ...safeUser } = newUser;
-    setCurrentUser(safeUser);
-    localStorage.setItem('currentUser', JSON.stringify(safeUser));
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('currentUser');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté de votre compte."
+      });
+    } catch (error: any) {
+      console.error('Erreur de déconnexion:', error);
+      toast({
+        title: "Erreur de déconnexion",
+        description: error.message || "Échec de la déconnexion. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
   };
 
   const value = {
     currentUser,
-    user: currentUser, // Add user property for compatibility
+    user: currentUser, // Pour compatibilité avec le code existant
+    session,
     loading,
     login,
     register,
     logout,
-    isAuthenticated: !!currentUser
+    isAuthenticated: !!session
   };
 
   return (

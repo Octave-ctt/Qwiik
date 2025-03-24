@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FavoritesPage from "../components/account/FavoritesPage";
+import OrdersPage from "../components/account/OrdersPage";
 import { Home, Key, MapPin, ShoppingBag, User } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 const AccountPage = () => {
   const { currentUser, isAuthenticated, logout } = useContext(AuthContext);
@@ -14,14 +16,39 @@ const AccountPage = () => {
   const [savedAddress, setSavedAddress] = useState<any>(null);
 
   useEffect(() => {
-    // Fetch saved address from localStorage
-    const address = localStorage.getItem('userAddress');
-    if (address) {
-      setSavedAddress(JSON.parse(address));
+    // Vérifier que l'utilisateur est connecté
+    if (!isAuthenticated || !currentUser) {
+      return;
     }
-  }, []);
+    
+    // Récupérer l'adresse depuis Supabase
+    const fetchAddress = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('addresses')
+          .eq('id', currentUser.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data && data.addresses && data.addresses.length > 0) {
+          setSavedAddress(data.addresses[0]);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération de l\'adresse:', error);
+      }
+    };
+    
+    fetchAddress();
+  }, [currentUser, isAuthenticated]);
 
-  // Show loading state while auth is being checked
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  // Show loading state while auth is being checked or redirecting
   if (!isAuthenticated || !currentUser) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -99,24 +126,14 @@ const AccountPage = () => {
           </Card>
           
           <div className="pt-4">
-            <Button onClick={() => {
-              logout();
-              navigate('/');
-            }} variant="destructive" className="w-full sm:w-auto">
+            <Button onClick={handleLogout} variant="destructive" className="w-full sm:w-auto">
               Se déconnecter
             </Button>
           </div>
         </TabsContent>
         
         <TabsContent value="orders">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-lg"><ShoppingBag className="mr-2" size={20} />Mes commandes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Vous n'avez pas encore de commandes.</p>
-            </CardContent>
-          </Card>
+          <OrdersPage />
         </TabsContent>
         
         <TabsContent value="favorites">

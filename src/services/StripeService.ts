@@ -1,9 +1,10 @@
 
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
+import { supabase } from '../lib/supabase';
 
 // Utiliser la clé publique Stripe depuis les variables d'environnement
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu';
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY;
 const stripePromise = loadStripe(stripePublicKey);
 
 export interface CheckoutSessionResponse {
@@ -15,7 +16,7 @@ export const StripeService = {
   /**
    * Crée une session de checkout Stripe
    */
-  createCheckoutSession: async (items: CartItem[]): Promise<CheckoutSessionResponse> => {
+  createCheckoutSession: async (items: CartItem[], userId: string): Promise<CheckoutSessionResponse> => {
     // Formater les produits pour Stripe
     const lineItems = items.map(({ product, quantity }) => ({
       price_data: {
@@ -30,27 +31,54 @@ export const StripeService = {
     }));
 
     try {
+      // Créer une commande dans Supabase avec le statut "pending"
+      const total = items.reduce((sum, { product, quantity }) => sum + (product.price * quantity), 0);
+      
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: userId,
+          status: 'pending',
+          total
+        })
+        .select()
+        .single();
+      
+      if (orderError) throw orderError;
+      
+      // Ajouter les éléments de la commande
+      const orderItems = items.map(({ product, quantity }) => ({
+        order_id: orderData.id,
+        product_id: product.id,
+        quantity,
+        price: product.price
+      }));
+      
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+      
+      if (itemsError) throw itemsError;
+
       // En mode développement ou en test, utiliser le serveur mock
       if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
         console.log('Mode développement détecté - simulation du paiement Stripe');
-        const mockResponse = await StripeService.simulateBackendCheckout(items);
-        
-        // Simuler la redirection vers Stripe en redirigeant vers la page de succès
-        setTimeout(() => {
-          window.location.href = '/payment/success';
-        }, 1500);
+        const mockResponse = await StripeService.simulateBackendCheckout(items, orderData.id);
         
         return mockResponse;
       }
 
       // En production, appeler l'API backend
-      console.log('Appel à l\'API de paiement Stripe');
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ lineItems }),
+        body: JSON.stringify({ 
+          lineItems,
+          orderId: orderData.id,
+          userId
+        }),
       });
 
       if (!response.ok) {
@@ -93,19 +121,53 @@ export const StripeService = {
 
   /**
    * Simule un backend pour la création de session Stripe en mode développement
-   * En production, cela serait géré par votre serveur backend
    */
-  simulateBackendCheckout: async (items: CartItem[]): Promise<CheckoutSessionResponse> => {
+  simulateBackendCheckout: async (items: CartItem[], orderId: string): Promise<CheckoutSessionResponse> => {
     // Cette fonction simule ce qui se passerait côté serveur
-    // Elle ne devrait jamais être utilisée en production
+    // En production, cela serait géré par votre serveur backend
     
     // Simulation de traitement de commande
     console.log('Éléments à acheter:', items);
     
-    // Simuler une réponse de l'API
     return {
       sessionId: `session_${Date.now()}`,
-      url: `/payment/success`, // Rediriger vers notre page de succès interne
+      url: `/payment/success?session_id=${Date.now()}&order_id=${orderId}`, // Rediriger vers notre page de succès interne
     };
+  },
+
+  /**
+   * Met à jour le statut d'une commande après paiement
+   */
+  updateOrderStatus: async (orderId: string, status: 'completed' | 'cancelled'): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      // Si la commande est terminée, vider le panier
+      if (status === 'completed') {
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('user_id')
+          .eq('id', orderId)
+          .single();
+        
+        if (orderError) throw orderError;
+        
+        // Vider le panier de l'utilisateur
+        const { error: cartError } = await supabase
+          .from('cart_items')
+          .delete()
+          .eq('user_id', orderData.user_id);
+        
+        if (cartError) throw cartError;
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la commande:', error);
+      throw error;
+    }
   }
 };

@@ -1,9 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Ces valeurs seront remplacées par vos clés réelles
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Utiliser les variables d'environnement ou les valeurs définies dans main.tsx
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || window.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
 
 // Créer le client Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
