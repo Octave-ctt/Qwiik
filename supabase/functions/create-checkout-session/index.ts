@@ -30,42 +30,34 @@ serve(async (req) => {
       throw new Error("Données manquantes pour créer la session Stripe");
     }
 
+    // Initialiser le client Supabase pour récupérer la clé Stripe
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Tenter de récupérer la clé Stripe depuis les variables d'environnement ou Supabase
     let secretKey = STRIPE_SECRET_KEY;
     
-    // Si la clé n'est pas définie dans les variables d'environnement, essayer de la récupérer depuis Supabase
     if (!secretKey) {
-      // Initialiser le client Supabase
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      console.log("Récupération de la clé Stripe depuis la table secrets");
       const { data: secretData, error: secretError } = await supabase
         .from('secrets')
         .select('value')
         .eq('name', 'STRIPE_SECRET_KEY')
         .single();
 
-      if (!secretError && secretData) {
-        secretKey = secretData.value;
-        console.log("Clé Stripe récupérée depuis la table secrets");
-      } else {
-        throw new Error("Clé Stripe non trouvée");
+      if (secretError) {
+        console.error("Erreur lors de la récupération de la clé:", secretError.message);
+        throw new Error("Impossible de récupérer la clé Stripe");
       }
       
-      // Enregistrer la session dans Supabase
-      if (userId) {
-        await supabase
-          .from("orders")
-          .insert({
-            user_id: userId,
-            session_id: Date.now().toString(),
-            status: 'pending',
-            amount_total: 0, // Sera mis à jour avec le montant réel
-            created_at: new Date().toISOString(),
-          });
+      if (secretData) {
+        secretKey = secretData.value;
+        console.log("Clé Stripe récupérée avec succès");
       }
     }
-
-    // Vérifier qu'une clé Stripe a été trouvée
+    
+    // Vérifier qu'une clé a été trouvée
     if (!secretKey) {
-      throw new Error("Impossible de récupérer la clé secrète Stripe");
+      throw new Error("Aucune clé Stripe trouvée. Veuillez configurer STRIPE_SECRET_KEY dans les variables d'environnement ou dans la table secrets.");
     }
 
     // Initialiser Stripe avec la clé récupérée
@@ -74,7 +66,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Créer une session de checkout Stripe
+    // Créer une session Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
@@ -82,9 +74,28 @@ serve(async (req) => {
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
-        userId: userId,
+        userId: userId || "",
       },
     });
+
+    // En cas de succès, enregistrer la commande dans Supabase si un userId est fourni
+    if (userId) {
+      try {
+        await supabase
+          .from("orders")
+          .insert({
+            user_id: userId,
+            session_id: session.id,
+            status: 'pending',
+            amount_total: session.amount_total ? session.amount_total / 100 : 0,
+            created_at: new Date().toISOString(),
+          });
+        console.log("Commande enregistrée avec succès");
+      } catch (orderError) {
+        console.error("Erreur lors de l'enregistrement de la commande:", orderError);
+        // On continue même si l'enregistrement échoue
+      }
+    }
 
     // Retourner les informations de la session au client
     return new Response(

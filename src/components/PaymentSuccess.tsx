@@ -13,20 +13,27 @@ const PaymentSuccess = () => {
   const orderId = searchParams.get('order_id');
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, currentUser } = useContext(AuthContext);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const completeOrder = async () => {
       if (!sessionId) {
-        navigate('/');
+        setError("Identifiant de session manquant");
+        setIsProcessing(false);
         return;
       }
 
       try {
+        // Si c'est une simulation (développement/prévisualisation)
+        const isSimulation = import.meta.env.DEV || window.location.hostname.includes('lovable');
+        
         // Marquer la commande comme terminée
         if (orderId) {
           await StripeService.updateOrderStatus(orderId, 'completed');
+        } else if (isSimulation) {
+          console.log('Simulation: Commande marquée comme terminée');
         }
 
         setIsProcessing(false);
@@ -36,6 +43,7 @@ const PaymentSuccess = () => {
         });
       } catch (error) {
         console.error('Erreur lors de la finalisation de la commande:', error);
+        setError("Une erreur est survenue lors de la finalisation de votre commande.");
         toast({
           title: "Erreur",
           description: "Une erreur est survenue lors de la finalisation de votre commande.",
@@ -45,16 +53,15 @@ const PaymentSuccess = () => {
       }
     };
 
-    if (isAuthenticated) {
+    // Si l'utilisateur est connecté ou en mode simulation, finaliser la commande
+    if (isAuthenticated || import.meta.env.DEV || window.location.hostname.includes('lovable')) {
       completeOrder();
     } else {
-      // Si l'utilisateur n'est pas connecté, attendre un peu puis rediriger
-      const timer = setTimeout(() => {
-        navigate('/');
-      }, 2000);
-      return () => clearTimeout(timer);
+      // Si l'utilisateur n'est pas connecté en production, lui montrer un message
+      setError("Veuillez vous connecter pour finaliser votre commande");
+      setIsProcessing(false);
     }
-  }, [sessionId, orderId, toast, navigate, isAuthenticated]);
+  }, [sessionId, orderId, toast, navigate, isAuthenticated, currentUser]);
 
   if (isProcessing) {
     return (
@@ -64,6 +71,32 @@ const PaymentSuccess = () => {
             <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-200"></div>
             <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container py-16 text-center">
+        <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-subtle border border-gray-100">
+          <div className="mx-auto w-16 h-16 flex items-center justify-center bg-red-100 rounded-full mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="text-red-600" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          
+          <h1 className="text-2xl font-bold mb-2">Erreur</h1>
+          <p className="text-gray-600 mb-6">
+            {error}
+          </p>
+          
+          <div className="flex justify-center">
+            <Link to="/">
+              <Button className="flex items-center justify-center">
+                <Home className="mr-2" size={16} />
+                Retour à l'accueil
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

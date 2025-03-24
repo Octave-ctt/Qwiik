@@ -47,6 +47,7 @@ export const StripeService = {
       }
       
       // En production, utiliser l'edge function Supabase
+      console.log('Appel de la fonction Edge Supabase pour créer une session Stripe');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           lineItems,
@@ -58,19 +59,27 @@ export const StripeService = {
       
       if (error) {
         console.error('Erreur Supabase fonction:', error);
-        throw error;
+        throw new Error(`Erreur lors de la création de la session Stripe: ${error.message}`);
       }
       
+      if (!data || !data.sessionId || !data.url) {
+        throw new Error('Réponse invalide de la fonction Stripe');
+      }
+      
+      console.log('Session Stripe créée avec succès:', data.sessionId);
       return data;
     } catch (error) {
       console.error('Erreur Stripe:', error);
       
-      // En cas d'erreur, utiliser également le fallback simulé
-      console.log('Erreur détectée, utilisation du mode simulation');
+      // En cas d'erreur en production, notifier l'utilisateur
+      if (!(import.meta.env.DEV || window.location.hostname.includes('lovable'))) {
+        throw error; // En production, propager l'erreur
+      }
       
+      // En développement, utiliser la simulation
+      console.log('Erreur détectée, utilisation du mode simulation');
       const sessionId = `cs_test_${Date.now()}`;
       const url = `/checkout?simulation=true&session_id=${sessionId}`;
-      
       return { sessionId, url };
     }
   },
@@ -79,24 +88,32 @@ export const StripeService = {
    * Redirige l'utilisateur vers la page de paiement Stripe
    */
   redirectToCheckout: async (sessionId: string): Promise<void> => {
-    const stripe = await stripePromise;
-    if (!stripe) {
-      throw new Error('Stripe n\'a pas pu être initialisé');
-    }
-
     const isDevOrPreview = import.meta.env.DEV || window.location.hostname.includes('lovable');
     
     if (isDevOrPreview) {
       // En mode développement ou prévisualisation, rediriger vers la page de checkout locale
       console.log('Redirection vers simulation Stripe avec session ID:', sessionId);
       window.location.href = `/checkout?simulation=true&session_id=${sessionId}`;
-    } else {
-      // En production, rediriger réellement vers Stripe
+      return;
+    }
+    
+    // En production, rediriger vers Stripe
+    try {
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe n\'a pas pu être initialisé');
+      }
+      
+      console.log('Redirection vers Stripe Checkout avec session ID:', sessionId);
       const { error } = await stripe.redirectToCheckout({ sessionId });
+      
       if (error) {
         console.error('Erreur lors de la redirection vers Stripe:', error);
         throw error;
       }
+    } catch (error) {
+      console.error('Erreur lors de la redirection vers Stripe:', error);
+      throw error;
     }
   },
 
@@ -122,6 +139,7 @@ export const StripeService = {
           .eq('id', orderId);
           
         if (error) {
+          console.error('Erreur lors de la mise à jour de la commande:', error);
           throw error;
         }
         
