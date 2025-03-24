@@ -1,7 +1,5 @@
-
 import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProductById, getRelatedProducts } from "../server/mockApi";
 import { Button } from "@/components/ui/button";
 import { CartContext } from "../contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +9,39 @@ import FavoriteButton from "../components/FavoriteButton";
 import { formatPrice } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+const getProductById = async (id: string) => {
+  return {
+    id,
+    name: "Product Example",
+    price: 99.99,
+    image: "/placeholder.svg",
+    category: "Category Example",
+    description: "This is a product description example.",
+    rating: 4.5,
+    reviewCount: 123,
+    deliveryTime: "2-3 jours"
+  };
+};
+
+const getRelatedProducts = async (category: string) => {
+  return [
+    {
+      id: "related1",
+      name: "Related Product 1",
+      price: 89.99,
+      image: "/placeholder.svg",
+      category
+    },
+    {
+      id: "related2",
+      name: "Related Product 2",
+      price: 79.99,
+      image: "/placeholder.svg",
+      category
+    }
+  ];
+};
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -33,7 +64,6 @@ const ProductPage = () => {
           }
           setProduct(productData);
 
-          // Fetch related products
           const related = await getRelatedProducts(productData.category);
           setRelatedProducts(related.filter((p: any) => p.id !== productId));
         }
@@ -197,7 +227,10 @@ const ProductPage = () => {
       {relatedProducts.length > 0 && (
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
-          <FeaturedProducts products={relatedProducts} />
+          <FeaturedProducts 
+            products={relatedProducts} 
+            title="Produits similaires" 
+          />
         </div>
       )}
     </div>

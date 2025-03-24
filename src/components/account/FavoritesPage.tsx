@@ -5,7 +5,35 @@ import { Link } from "react-router-dom";
 import FavoritesService from "@/services/FavoritesService";
 import { formatPrice } from "@/lib/utils";
 import { Heart } from "lucide-react";
-import { getAllProducts } from "@/server/mockApi";
+
+// Mock function to get all products (temporary solution)
+const getAllProducts = async () => {
+  // This is a temporary implementation until the real API function is available
+  // It returns mock data that would normally come from the API
+  return [
+    {
+      id: "1",
+      name: "Produit 1",
+      price: 99.99,
+      image: "/placeholder.svg",
+      category: "Catégorie 1"
+    },
+    {
+      id: "2",
+      name: "Produit 2",
+      price: 149.99,
+      image: "/placeholder.svg",
+      category: "Catégorie 2"
+    },
+    {
+      id: "3",
+      name: "Produit 3",
+      price: 199.99,
+      image: "/placeholder.svg",
+      category: "Catégorie 1"
+    }
+  ];
+};
 
 const FavoritesPage = () => {
   const [favoritesProducts, setFavoritesProducts] = useState<any[]>([]);
