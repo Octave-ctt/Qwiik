@@ -1,143 +1,121 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { X, Eye, EyeOff } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthContext } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const auth = useContext(AuthContext);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if passwords match
-    if (formData.newPassword !== formData.confirmPassword) {
+    // Validations
+    if (!currentPassword || !newPassword || !confirmPassword) {
       toast({
         title: "Erreur",
-        description: "Les mots de passe ne correspondent pas.",
+        description: "Veuillez remplir tous les champs.",
         variant: "destructive",
       });
       return;
     }
     
-    // Simulate password change
-    // In a real app, this would call an API
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erreur",
+        description: "Les nouveaux mots de passe ne correspondent pas.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // In a real app, you would verify the current password and update it in the backend
+    // For this demo, we'll just simulate success
+    
+    // Show success message
     toast({
-      title: "Mot de passe modifié",
+      title: "Mot de passe mis à jour",
       description: "Votre mot de passe a été modifié avec succès.",
-      variant: "success",
+      variant: "default",
     });
     
-    // Navigate back to account page
+    // Redirect back to account page
     navigate('/account');
   };
 
   return (
-    <div className="container max-w-md mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Changer le mot de passe</h1>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate('/account')}
-          aria-label="Fermer"
-        >
-          <X size={24} />
-        </Button>
-      </div>
+    <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <Button 
+        variant="outline" 
+        onClick={() => navigate('/account')}
+        className="mb-6"
+      >
+        Retour à mon compte
+      </Button>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-          <div className="relative">
-            <Input
-              id="currentPassword"
-              name="currentPassword"
-              type={showCurrentPassword ? "text" : "password"}
-              value={formData.currentPassword}
-              onChange={handleChange}
-              required
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-            >
-              {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Button>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-          <div className="relative">
-            <Input
-              id="newPassword"
-              name="newPassword"
-              type={showNewPassword ? "text" : "password"}
-              value={formData.newPassword}
-              onChange={handleChange}
-              required
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-            >
-              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Button>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
-          <div className="relative">
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Button>
-          </div>
-        </div>
-        
-        <Button type="submit" className="w-full">Changer le mot de passe</Button>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Changer mon mot de passe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="currentPassword" className="block text-sm font-medium mb-1">
+                Mot de passe actuel
+              </label>
+              <input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full p-2 border border-gray-200 rounded-md"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium mb-1">
+                Nouveau mot de passe
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full p-2 border border-gray-200 rounded-md"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                Confirmer le nouveau mot de passe
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full p-2 border border-gray-200 rounded-md"
+                required
+              />
+            </div>
+            
+            <div className="pt-4">
+              <Button type="submit" className="w-full sm:w-auto">
+                Mettre à jour mon mot de passe
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

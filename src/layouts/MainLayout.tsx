@@ -7,7 +7,7 @@ import AuthModal from "../components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 
 const MainLayout = () => {
-  const { user } = useContext(AuthContext);
+  const auth = useContext(AuthContext);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authType, setAuthType] = useState<"login" | "register">("login");
 
@@ -27,10 +27,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar
-        onLoginClick={openLoginModal}
-        onRegisterClick={openRegisterModal}
-      />
+      <Navbar />
       <main className="flex-grow">
         <Outlet />
       </main>
@@ -78,7 +75,7 @@ const MainLayout = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={closeAuthModal}
-        type={authType}
+        initialView={authType}
       />
     </div>
   );

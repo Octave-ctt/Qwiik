@@ -4,6 +4,7 @@ import { User } from '../utils/data';
 
 interface AuthContextType {
   currentUser: User | null;
+  user: User | null; // Adding for compatibility with existing code
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
@@ -13,6 +14,7 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType>({
   currentUser: null,
+  user: null,
   loading: true,
   login: async () => {},
   register: async () => {},
@@ -95,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     currentUser,
+    user: currentUser, // Add user property for compatibility
     loading,
     login,
     register,

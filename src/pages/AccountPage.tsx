@@ -9,7 +9,7 @@ import FavoritesPage from "../components/account/FavoritesPage";
 import { Home, Key, MapPin, ShoppingBag, User } from "lucide-react";
 
 const AccountPage = () => {
-  const { user, logout } = useContext(AuthContext);
+  const auth = useContext(AuthContext);
   const navigate = useNavigate();
   const [savedAddress, setSavedAddress] = useState<any>(null);
 
@@ -21,7 +21,7 @@ const AccountPage = () => {
     }
   }, []);
 
-  if (!user) {
+  if (!auth.currentUser) {
     return (
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-2xl font-bold mb-6">Mon compte</h1>
@@ -49,8 +49,8 @@ const AccountPage = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col space-y-2">
-                <p><strong>Nom :</strong> {user.name}</p>
-                <p><strong>Email :</strong> {user.email}</p>
+                <p><strong>Nom :</strong> {auth.currentUser.name}</p>
+                <p><strong>Email :</strong> {auth.currentUser.email}</p>
               </div>
               <div className="mt-4">
                 <Link to="/account/change-password">
@@ -98,7 +98,7 @@ const AccountPage = () => {
           </Card>
           
           <div className="pt-4">
-            <Button onClick={logout} variant="destructive" className="w-full sm:w-auto">
+            <Button onClick={auth.logout} variant="destructive" className="w-full sm:w-auto">
               Se déconnecter
             </Button>
           </div>

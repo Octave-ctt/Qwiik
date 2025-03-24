@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
@@ -8,14 +8,26 @@ type AuthModalProps = {
   isOpen: boolean;
   onClose: () => void;
   initialView?: 'login' | 'register';
+  type?: 'login' | 'register'; // For backward compatibility
 };
 
 const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
-  initialView = 'login'
+  initialView = 'login',
+  type
 }) => {
-  const [view, setView] = useState<'login' | 'register'>(initialView);
+  // Use type as a fallback if initialView is not provided (for backward compatibility)
+  const [view, setView] = useState<'login' | 'register'>(initialView || type || 'login');
+  
+  // Update view when initialView or type prop changes
+  useEffect(() => {
+    if (initialView) {
+      setView(initialView);
+    } else if (type) {
+      setView(type);
+    }
+  }, [initialView, type]);
 
   if (!isOpen) return null;
 

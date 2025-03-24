@@ -13,7 +13,8 @@ interface FavoriteButtonProps {
 }
 
 const FavoriteButton = ({ productId, className }: FavoriteButtonProps) => {
-  const { user } = useContext(AuthContext) || { user: null };
+  const auth = useContext(AuthContext);
+  const user = auth?.currentUser;
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
 
