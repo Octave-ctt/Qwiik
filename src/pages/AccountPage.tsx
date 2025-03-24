@@ -10,10 +10,19 @@ import OrdersPage from "../components/account/OrdersPage";
 import { Home, Key, MapPin, ShoppingBag, User } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
+// Type pour les adresses
+interface Address {
+  name: string;
+  street: string;
+  zipCode: string;
+  city: string;
+  phoneNumber: string;
+}
+
 const AccountPage = () => {
   const { currentUser, isAuthenticated, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [savedAddress, setSavedAddress] = useState<any>(null);
+  const [savedAddress, setSavedAddress] = useState<Address | null>(null);
 
   useEffect(() => {
     // Vérifier que l'utilisateur est connecté
@@ -32,8 +41,8 @@ const AccountPage = () => {
         
         if (error) throw error;
         
-        if (data && data.addresses && data.addresses.length > 0) {
-          setSavedAddress(data.addresses[0]);
+        if (data && data.addresses && Array.isArray(data.addresses) && data.addresses.length > 0) {
+          setSavedAddress(data.addresses[0] as Address);
         }
       } catch (error) {
         console.error('Erreur lors de la récupération de l\'adresse:', error);

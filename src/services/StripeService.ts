@@ -46,6 +46,11 @@ export const StripeService = {
       
       if (orderError) throw orderError;
       
+      // Vérifier que orderData.id existe et est une chaîne
+      if (!orderData || typeof orderData.id !== 'string') {
+        throw new Error('ID de commande invalide ou manquant');
+      }
+      
       // Ajouter les éléments de la commande
       const orderItems = items.map(({ product, quantity }) => ({
         order_id: orderData.id,

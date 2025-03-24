@@ -60,16 +60,39 @@ const OrdersPage = () => {
       
       // Pour chaque commande, récupérer les articles
       const ordersWithItems = await Promise.all(ordersData.map(async (order) => {
+        // Récupérer les articles de commande
         const { data: itemsData, error: itemsError } = await supabase
           .from('order_items')
-          .select('*, product:products(id, name, image)')
+          .select('id, product_id, quantity, price')  // Sélectionner explicitement les champs
           .eq('order_id', order.id);
         
         if (itemsError) throw itemsError;
         
+        // Pour chaque article, récupérer les informations du produit
+        const itemsWithProducts = await Promise.all((itemsData || []).map(async (item) => {
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('name, image')
+            .eq('id', item.product_id)
+            .single();
+          
+          if (productError && productError.code !== 'PGRST116') {
+            console.error('Erreur lors de la récupération du produit:', productError);
+          }
+          
+          return {
+            ...item,
+            product: productData || { name: 'Produit indisponible', image: '' }
+          } as OrderItem;
+        }));
+        
+        // Construire l'objet de commande complet
         return {
-          ...order,
-          items: itemsData || []
+          id: order.id,
+          created_at: order.created_at,
+          status: order.status,
+          total: order.total,
+          items: itemsWithProducts
         } as Order;
       }));
       
