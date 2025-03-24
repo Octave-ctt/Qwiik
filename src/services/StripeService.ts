@@ -1,3 +1,4 @@
+
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
