@@ -1,4 +1,3 @@
-
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
@@ -31,30 +30,25 @@ export const StripeService = {
     }));
     
     try {
-      // Vérifier si nous sommes en mode développement ou production
-      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
-        console.log('Mode développement détecté - simulation du paiement Stripe');
-        const total = items.reduce((sum, { product, quantity }) => sum + (product.price * quantity), 0);
-        
-        // Créer un ID de commande fictif
-        const orderId = `o${Date.now()}`;
-        
-        // Dans une implémentation de développement, simuler un paiement réussi
-        console.log('Commande créée avec succès:', {
-          id: orderId,
+      // Utiliser l'edge function Supabase pour créer la session Stripe
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          lineItems,
           userId,
-          total,
-          items: items.length
-        });
-        
-        return {
-          sessionId: `session_${Date.now()}`,
-          url: `/payment/success?session_id=${Date.now()}&order_id=${orderId}`,
-        };
-      } else {
-        // En production, créer une vraie session Stripe
-        // Utiliser une API serverless ou un endpoint backend
-        // Pour simplifier, utilisons une requête fetch directe (en production, cela devrait être géré côté serveur)
+          successUrl: `${window.location.origin}/payment/success`,
+          cancelUrl: `${window.location.origin}/cart`,
+          stripeKey: stripePublicKey,
+        }
+      });
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      console.error('Erreur Stripe:', error);
+      
+      // Fallback vers l'ancien système si l'edge function échoue
+      try {
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
           headers: {
@@ -74,10 +68,10 @@ export const StripeService = {
         
         const { sessionId, url } = await response.json();
         return { sessionId, url };
+      } catch (fallbackError) {
+        console.error('Erreur fallback Stripe:', fallbackError);
+        throw fallbackError;
       }
-    } catch (error) {
-      console.error('Erreur Stripe:', error);
-      throw error;
     }
   },
 

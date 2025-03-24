@@ -1,4 +1,3 @@
-
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -32,7 +31,7 @@ const CheckoutPage = () => {
   const { currentUser } = useAuth();
   
   const subtotal = getCartTotal();
-  const deliveryFee = 0.02;
+  const deliveryFee = 0.02; // Frais de livraison à 2 centimes comme demandé
   const total = subtotal + deliveryFee;
   
   const handleSubmitAddress = (e: React.FormEvent) => {

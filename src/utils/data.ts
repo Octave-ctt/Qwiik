@@ -90,6 +90,16 @@ export const products: Product[] = [
     reviewCount: 345,
     deliveryTime: "30 min",
     category: "tech"
+  },
+  {
+    id: "13",
+    name: "Micro Adaptateur USB",
+    price: 0.03,
+    image: "https://images.unsplash.com/photo-1589634749000-1e72e2c5f384?q=80&w=1000",
+    rating: 4.5,
+    reviewCount: 42,
+    deliveryTime: "30 min",
+    category: "tech"
   }
 ];
 
@@ -307,4 +317,3 @@ export const categories = [
   { name: 'Beauté', slug: 'beauty', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000' },
   { name: 'Maison & Déco', slug: 'home', image: 'https://images.unsplash.com/photo-1591130901921-3f0652bb3915?q=80&w=1000' }
 ];
-

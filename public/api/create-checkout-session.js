@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       //   cancel_url: req.body.cancelUrl,
       // });
       
-      // Simulons une réponse de l'API Stripe pour tester
+      // Nous retournons une réponse simulée pour l'instant
       console.log('Requête de création de session Stripe reçue:', req.body);
       
       const session = {
