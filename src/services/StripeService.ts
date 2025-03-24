@@ -7,8 +7,8 @@ import { supabase } from '../lib/supabase';
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_test_51R48HiBD1jNEQIjBKEt8E1pNwyupyqIfZQkvx0yYB1n3BR849TTNNHU6E3Ryk4mwuqDcc3912o8Ke3zhPvpWujet008AgI4VyT';
 const stripePromise = loadStripe(stripePublicKey);
 
-// URL de la fonction Edge Supabase
-const SUPABASE_FUNCTION_URL = 'https://ttjqnpfoulphvrckltim.functions.supabase.co/create-checkout-session';
+// URL correcte de la fonction Edge Supabase
+const SUPABASE_FUNCTION_URL = 'https://ttjqnpfoulphvrckltim.supabase.co/functions/v1/create-checkout-session';
 
 export interface CheckoutSessionResponse {
   sessionId: string;
@@ -34,14 +34,18 @@ export const StripeService = {
     }));
     
     try {
-      // Au lieu d'utiliser supabase.functions.invoke, appeler directement l'URL de la fonction
+      // Appeler directement l'URL correcte de la fonction Edge Supabase
       console.log('Appel direct de la fonction Edge Supabase pour créer une session Stripe');
+      
+      // Récupérer le token d'accès de l'utilisateur connecté
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token || '';
       
       const response = await fetch(SUPABASE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ 
           lineItems,
