@@ -43,20 +43,17 @@ const CartPage = () => {
       
       toast({
         title: "Redirection vers le paiement...",
-        description: "Vous allez être redirigé vers la page de paiement"
+        description: "Vous allez être redirigé vers la page de paiement Stripe"
       });
       
-      setTimeout(() => {
-        window.location.href = url;
-        setIsProcessing(false);
-      }, 1500);
+      window.location.href = url;
       
     } catch (error) {
       setIsProcessing(false);
       console.error("Erreur lors du checkout:", error);
       toast({
         title: "Erreur de paiement",
-        description: "Un problème est survenu lors de la redirection vers la page de paiement.",
+        description: "Un problème est survenu lors de la redirection vers la page de paiement. Veuillez réessayer.",
         variant: "destructive"
       });
     }

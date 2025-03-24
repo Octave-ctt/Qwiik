@@ -97,21 +97,7 @@ export const StripeService = {
       return data;
     } catch (error) {
       console.error('Erreur Stripe:', error);
-      
-      // En mode développement, offrir une simulation si l'API est inaccessible
-      if (import.meta.env.DEV || window.location.hostname === 'localhost') {
-        console.warn('Mode développement: utilisation de la simulation de paiement');
-        
-        // Redirection vers la page de paiement avec paramètre de simulation
-        const simulationSessionId = `sim_${Date.now()}`;
-        const simulationUrl = `${window.location.origin}/checkout?simulation=true&session_id=${simulationSessionId}`;
-        
-        return {
-          sessionId: simulationSessionId,
-          url: simulationUrl
-        };
-      }
-      
+      // On ne fait plus de simulation, on remonte simplement l'erreur pour que l'utilisateur puisse la voir
       throw error;
     }
   },
