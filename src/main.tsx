@@ -5,13 +5,6 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 
-// Définir les variables globales pour Stripe si non définies dans l'environnement
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  // Utiliser une clé publique de test par défaut
-  // Note: C'est une clé de test, donc elle peut être exposée dans le code
-  window.STRIPE_PUBLIC_KEY = 'pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu';
-}
-
 // Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
