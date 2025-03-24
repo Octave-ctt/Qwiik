@@ -8,22 +8,33 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null;
 export const getSupabase = () => {
   if (supabaseInstance) return supabaseInstance;
   
-  const supabaseUrl = window.SUPABASE_URL;
-  const supabaseAnonKey = window.SUPABASE_ANON_KEY;
+  // Vérifier si les variables d'environnement Supabase sont disponibles via import.meta.env
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   // Vérification de la présence des variables Supabase
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Variables Supabase manquantes:', { 
-      supabaseUrl: supabaseUrl ? 'définie' : 'non définie', 
-      supabaseAnonKey: supabaseAnonKey ? 'définie' : 'non définie' 
-    });
-    // Utiliser des valeurs par défaut si non définies
-    const defaultUrl = 'https://ttjqnpfoulphvrckltim.supabase.co';
-    const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0anFucGZvdWxwaHZyY2tsdGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTQ0NDYsImV4cCI6MjA1ODM5MDQ0Nn0.qaYK2zPjE8vQs4UCNGXYQqkBjJfwX073UoUdHXEH0bI';
+    console.error('Variables Supabase manquantes. Veuillez vous connecter via l\'intégration native Lovable.');
     
-    console.log('Utilisation des valeurs par défaut pour Supabase');
-    supabaseInstance = createClient(defaultUrl, defaultKey);
-    return supabaseInstance;
+    // Retourner un client vide avec des méthodes simulées pour éviter les erreurs
+    // @ts-ignore - client simulé pour le développement
+    return {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase non configuré') }),
+        signUp: () => Promise.resolve({ data: null, error: new Error('Supabase non configuré') }),
+        signOut: () => Promise.resolve({ error: null })
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: () => Promise.resolve({ data: null, error: null })
+          })
+        }),
+        upsert: () => Promise.resolve({ error: null })
+      })
+    };
   }
 
   // Créer et mettre en cache le client Supabase

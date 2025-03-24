@@ -1,4 +1,3 @@
-
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 
@@ -28,7 +27,7 @@ export const StripeService = {
       },
       quantity,
     }));
-
+    
     try {
       // En mode développement ou en test, utiliser le serveur mock
       console.log('Mode développement détecté - simulation du paiement Stripe');
