@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, X, Home, ChevronDown, Heart, LogOut } from 'lucide-react';
@@ -30,10 +29,7 @@ const QwiikLogo: React.FC = () => (
 const categories = [
   { name: 'Tech', slug: 'tech' },
   { name: 'Beauté', slug: 'beauty' },
-  { name: 'Maison & Déco', slug: 'home' },
-  { name: 'Mode', slug: 'fashion' },
-  { name: 'Livres', slug: 'books' },
-  { name: 'Sports', slug: 'sports' }
+  { name: 'Maison & Déco', slug: 'home' }
 ];
 
 const Navbar: React.FC = () => {
@@ -58,13 +54,11 @@ const Navbar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Mettre le focus sur le champ de recherche quand il s'ouvre
     if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [searchOpen]);
 
-  // Fermer la recherche quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchOpen && searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
@@ -90,7 +84,6 @@ const Navbar: React.FC = () => {
   const toggleSearch = () => {
     setSearchOpen(!searchOpen);
     if (!searchOpen) {
-      // Reset query when opening
       setSearchQuery('');
     }
   };
@@ -123,12 +116,10 @@ const Navbar: React.FC = () => {
     >
       <div className="page-container">
         <nav className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center">
             <QwiikLogo />
           </Link>
 
-          {/* Desktop Navigation */}
           {!isMobile && (
             <div className="hidden md:flex space-x-6 mx-4 items-center">
               <Link 
@@ -174,7 +165,6 @@ const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* Mobile Search */}
           {isMobile && !mobileMenuOpen && (
             <form 
               onSubmit={handleSearchSubmit}
@@ -194,7 +184,6 @@ const Navbar: React.FC = () => {
             </form>
           )}
 
-          {/* Right Navigation */}
           <div className="flex items-center space-x-4">
             {!isMobile && (
               <div className="relative">
@@ -206,7 +195,6 @@ const Navbar: React.FC = () => {
                   <Search className="h-5 w-5" />
                 </button>
                 
-                {/* Search Overlay */}
                 {searchOpen && (
                   <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg p-3 border border-gray-100 animate-slide-in">
                     <form onSubmit={handleSearchSubmit}>
@@ -272,7 +260,6 @@ const Navbar: React.FC = () => {
               </button>
             )}
             
-            {/* Mobile Menu Button */}
             {isMobile && (
               <button 
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -285,7 +272,6 @@ const Navbar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && isMobile && (
         <div className="md:hidden bg-white border-t border-gray-100 animate-slide-in">
           <div className="page-container py-4">
@@ -388,7 +374,6 @@ const Navbar: React.FC = () => {
         </div>
       )}
       
-      {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

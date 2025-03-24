@@ -1,4 +1,3 @@
-
 import { Product } from "../components/ProductCard";
 
 export const products: Product[] = [
@@ -83,36 +82,6 @@ export const products: Product[] = [
     category: "beauty"
   },
   {
-    id: "9",
-    name: "Sac à main design",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=1000",
-    rating: 4.7,
-    reviewCount: 154,
-    deliveryTime: "30 min",
-    category: "fashion"
-  },
-  {
-    id: "10",
-    name: "Jeu FIFA 24 PS5",
-    price: 49.99,
-    image: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=1000",
-    rating: 4.5,
-    reviewCount: 231,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "11",
-    name: "Support smartphone voiture",
-    price: 14.99,
-    image: "https://images.unsplash.com/photo-1557180295-76eee20ae8aa?q=80&w=1000",
-    rating: 4.8,
-    reviewCount: 176,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
     id: "12",
     name: "Chargeur sans fil",
     price: 24.99,
@@ -121,16 +90,6 @@ export const products: Product[] = [
     reviewCount: 345,
     deliveryTime: "30 min",
     category: "tech"
-  },
-  {
-    id: "13",
-    name: "Test",
-    price: 0.03,
-    image: "https://images.unsplash.com/photo-1535131749006-b7f58c99034b?q=80&w=1000",
-    rating: 5.0,
-    reviewCount: 1,
-    deliveryTime: "30 min",
-    category: "sports"
   }
 ];
 
@@ -161,7 +120,7 @@ export const searchProducts = (query: string, category: string = 'all'): Product
 };
 
 export const featuredProducts = products.slice(0, 6);
-export const bestSellers = [products[4], products[2], products[0], products[5], products[7], products[10]];
+export const bestSellers = [products[4], products[2], products[0], products[5], products[1], products[7]];
 
 export type CartItem = {
   product: Product;
@@ -346,8 +305,6 @@ export const getUserOrders = (userId: string): Order[] => {
 export const categories = [
   { name: 'Tech', slug: 'tech', image: 'https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?q=80&w=1000' },
   { name: 'Beauté', slug: 'beauty', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000' },
-  { name: 'Maison & Déco', slug: 'home', image: 'https://images.unsplash.com/photo-1591130901921-3f0652bb3915?q=80&w=1000' },
-  { name: 'Mode', slug: 'fashion', image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1000' },
-  { name: 'Livres', slug: 'books', image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000' },
-  { name: 'Sports', slug: 'sports', image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?q=80&w=1000' }
+  { name: 'Maison & Déco', slug: 'home', image: 'https://images.unsplash.com/photo-1591130901921-3f0652bb3915?q=80&w=1000' }
 ];
+

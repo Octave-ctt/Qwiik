@@ -14,8 +14,7 @@ const defaultCategories = [
   { name: 'Tous', slug: 'all' },
   { name: 'Tech', slug: 'tech' },
   { name: 'Beauté', slug: 'beauty' },
-  { name: 'Maison', slug: 'home' },
-  { name: 'Mode', slug: 'fashion' }
+  { name: 'Maison', slug: 'home' }
 ];
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
