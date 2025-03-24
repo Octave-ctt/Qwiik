@@ -12,6 +12,10 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   window.STRIPE_PUBLIC_KEY = 'pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu';
 }
 
+// Afficher un message pour les variables d'environnement Supabase
+console.log('SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? 'définie' : 'non définie');
+console.log('SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'définie' : 'non définie');
+
 // Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
