@@ -4,23 +4,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getProductsByCategory, categories } from '../utils/data';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 
 const CategoryPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  const category = categories.find(cat => cat.slug === slug);
-  const products = slug ? getProductsByCategory(slug) : [];
+  const category = categories.find(cat => cat.slug === categoryId);
+  const products = categoryId ? getProductsByCategory(categoryId) : [];
   
   useEffect(() => {
-    if (slug && !category) {
+    if (categoryId && !category) {
       navigate('/not-found');
     }
-  }, [slug, category, navigate]);
+  }, [categoryId, category, navigate]);
   
-  if (!category || !slug) {
+  if (!category || !categoryId) {
     return null;
   }
 
@@ -127,7 +127,7 @@ const CategoryPage = () => {
         </div>
         
         {products.length > 0 ? (
-          <div className="product-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
