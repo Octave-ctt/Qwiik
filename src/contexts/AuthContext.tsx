@@ -140,9 +140,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
 
           if (userData) {
+            // Vérification et conversion explicite du type pour éviter l'erreur TS2322
+            const userId = typeof userData.id === 'string' ? userData.id : `dev-${Date.now()}`;
+            
             // Créer manuellement un profil utilisateur pour le mode développement
             const devProfile: UserProfile = {
-              id: userData.id || `dev-${Date.now()}`,
+              id: userId,
               email: email,
               name: email.split('@')[0] || 'Utilisateur',
               addresses: [],
