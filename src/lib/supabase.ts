@@ -1,9 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Utiliser les variables d'environnement ou les valeurs définies dans main.tsx
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || window.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
+// Utiliser les valeurs définies dans window (dans main.tsx)
+const supabaseUrl = window.SUPABASE_URL;
+const supabaseAnonKey = window.SUPABASE_ANON_KEY;
+
+// Vérification de la présence des variables Supabase
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Variables Supabase manquantes:', { 
+    supabaseUrl: supabaseUrl ? 'définie' : 'non définie', 
+    supabaseAnonKey: supabaseAnonKey ? 'définie' : 'non définie' 
+  });
+}
 
 // Créer le client Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
