@@ -1,56 +1,85 @@
 
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import React, { useContext, useState } from "react";
+import { Outlet, Link } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import { AuthContext } from "../contexts/AuthContext";
+import AuthModal from "../components/auth/AuthModal";
+import { Button } from "@/components/ui/button";
 
-const MainLayout: React.FC = () => {
+const MainLayout = () => {
+  const { user } = useContext(AuthContext);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authType, setAuthType] = useState<"login" | "register">("login");
+
+  const openLoginModal = () => {
+    setAuthType("login");
+    setIsAuthModalOpen(true);
+  };
+
+  const openRegisterModal = () => {
+    setAuthType("register");
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background animate-fade-in" style={{ backgroundImage: 'linear-gradient(to top, #accbee 0%, #e7f0fd 100%)', backgroundAttachment: 'fixed' }}>
-      <Navbar />
+    <div className="flex flex-col min-h-screen">
+      <Navbar
+        onLoginClick={openLoginModal}
+        onRegisterClick={openRegisterModal}
+      />
       <main className="flex-grow">
         <Outlet />
       </main>
-      <footer className="bg-white py-8 border-t border-gray-100">
-        <div className="page-container">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <footer className="bg-gray-100 py-8 mt-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="font-bold text-lg mb-4">Qwiik</h3>
-              <p className="text-sm text-gray-600">
-                La livraison rapide de vos produits préférés en 30 minutes.
+              <p className="text-gray-600">
+                Livraison rapide de vos produits préférés en 30 minutes.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Catégories</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/category/tech" className="nav-link">Tech</a></li>
-                <li><a href="/category/beauty" className="nav-link">Beauté</a></li>
-                <li><a href="/category/home" className="nav-link">Maison & Déco</a></li>
-                <li><a href="/category/fashion" className="nav-link">Mode</a></li>
+              <h3 className="font-bold text-lg mb-4">Service client</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">
+                    Comment ça marche
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/account" className="text-gray-600 hover:text-gray-900">
+                    Mon compte
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">À propos</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/how-it-works" className="nav-link">Comment ça marche</a></li>
-                <li><a href="#" className="nav-link">Nos partenaires</a></li>
-                <li><a href="#" className="nav-link">FAQ</a></li>
-                <li><a href="#" className="nav-link">Nous contacter</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Légal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="nav-link">Conditions d'utilisation</a></li>
-                <li><a href="#" className="nav-link">Politique de confidentialité</a></li>
-                <li><a href="#" className="nav-link">Cookies</a></li>
-              </ul>
+              <h3 className="font-bold text-lg mb-4">Téléchargez notre app</h3>
+              <div className="flex space-x-2">
+                <Button variant="outline" className="text-xs px-3">
+                  App Store
+                </Button>
+                <Button variant="outline" className="text-xs px-3">
+                  Google Play
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center text-sm text-gray-500">
+          <div className="mt-8 pt-8 border-t border-gray-200 text-center text-gray-500 text-sm">
             <p>© {new Date().getFullYear()} Qwiik. Tous droits réservés.</p>
           </div>
         </div>
       </footer>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        type={authType}
+      />
     </div>
   );
 };

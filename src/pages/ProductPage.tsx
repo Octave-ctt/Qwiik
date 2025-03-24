@@ -1,207 +1,205 @@
 
-import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getProductById } from '../utils/data';
-import { ShoppingCart, ArrowLeft, Star, Truck, Clock, Heart, Share2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import ProductCard from '../components/ProductCard';
-import { CartContext } from '../contexts/CartContext';
+import React, { useContext, useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getProductById, getRelatedProducts } from "../server/mockApi";
+import { Button } from "@/components/ui/button";
+import { CartContext } from "../contexts/CartContext";
+import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, Star, Truck } from "lucide-react";
+import FeaturedProducts from "../components/FeaturedProducts";
+import FavoriteButton from "../components/FavoriteButton";
+import { formatPrice } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const ProductPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { productId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { addToCart } = useContext(CartContext);
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(1);
-  const [mainImage, setMainImage] = useState(0);
-  const [isAdding, setIsAdding] = useState(false);
-  
-  const product = id ? getProductById(id) : undefined;
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    if (!product) {
-      navigate('/not-found');
-    }
-  }, [product, navigate]);
-  
-  if (!product) {
-    return null;
-  }
-  
-  // Mock multiple images for the product
-  const productImages = [
-    product.image,
-    'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1001',
-    'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1002',
-  ];
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      try {
+        if (productId) {
+          const productData = await getProductById(productId);
+          if (!productData) {
+            navigate("/not-found");
+            return;
+          }
+          setProduct(productData);
+
+          // Fetch related products
+          const related = await getRelatedProducts(productData.category);
+          setRelatedProducts(related.filter((p: any) => p.id !== productId));
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        navigate("/not-found");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+    window.scrollTo(0, 0);
+  }, [productId, navigate]);
 
   const handleAddToCart = () => {
-    setIsAdding(true);
-    
-    setTimeout(() => {
+    if (product) {
       addToCart(product, quantity);
-      setIsAdding(false);
-      
-      toast({
-        title: "Produit ajouté au panier",
-        description: `${quantity} x ${product.name}`,
-      });
-    }, 500);
+    }
   };
-  
-  // Sample similar products - in a real app you'd fetch related products
-  const similarProducts = Array(3).fill(null).map((_, i) => getProductById(String(((parseInt(id) + i + 1) % 12) + 1))!);
 
-  return (
-    <div className="page-container py-8 animate-fade-in">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center text-sm font-medium mb-6 hover:text-qwiik-blue transition-colors"
-      >
-        <ArrowLeft size={16} className="mr-1" />
-        Retour
-      </button>
-      
-      <div className="grid md:grid-cols-2 gap-8 mb-12">
-        {/* Product Images */}
-        <div>
-          <div className="bg-white rounded-xl overflow-hidden mb-4 aspect-square">
-            <img
-              src={productImages[mainImage]}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            {productImages.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setMainImage(i)}
-                className={`rounded-lg overflow-hidden border-2 transition-all ${
-                  mainImage === i ? 'border-qwiik-blue' : 'border-transparent hover:border-gray-200'
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`${product.name} - vue ${i+1}`}
-                  className="w-full aspect-square object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Product Details */}
-        <div>
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="text-sm font-medium text-qwiik-blue">
-              {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
-            </span>
-            <span className="text-gray-300">•</span>
-            <div className="flex items-center">
-              {Array(5).fill(null).map((_, i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  className={`${
-                    i < Math.floor(product.rating) 
-                      ? "text-yellow-400 fill-yellow-400" 
-                      : "text-gray-300"
-                  }`}
-                />
-              ))}
-              <span className="text-sm ml-1 text-gray-600">
-                {product.rating} ({product.reviewCount} avis)
-              </span>
+  const increaseQuantity = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity((prev) => prev - 1);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg h-96"></div>
+            <div className="space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-12 bg-gray-200 rounded w-full mt-8"></div>
             </div>
-          </div>
-          
-          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          
-          <div className="mb-6">
-            <span className="text-3xl font-bold">
-              {product.price.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-            </span>
-          </div>
-          
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center space-x-2 text-sm">
-              <Clock size={18} className="text-qwiik-blue" />
-              <span>Livraison estimée: <strong>{product.deliveryTime}</strong></span>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm">
-              <Truck size={18} className="text-green-500" />
-              <span className="text-green-700">Livraison gratuite dès 35€ d'achat</span>
-            </div>
-          </div>
-          
-          <div className="border-t border-b py-6 border-gray-100 mb-6">
-            <h3 className="font-medium mb-2">Description</h3>
-            <p className="text-gray-600 mb-4">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla.
-            </p>
-            <p className="text-gray-600">
-              Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare.
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="flex items-center border border-gray-200 rounded-md">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-qwiik-blue transition-colors"
-                disabled={quantity <= 1}
-              >
-                -
-              </button>
-              <span className="w-10 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-qwiik-blue transition-colors"
-              >
-                +
-              </button>
-            </div>
-            
-            <button
-              onClick={handleAddToCart}
-              disabled={isAdding}
-              className={`btn-primary py-3 px-6 flex-grow flex items-center justify-center space-x-2 ${
-                isAdding ? 'opacity-75' : ''
-              }`}
-            >
-              <ShoppingCart size={18} />
-              <span>{isAdding ? 'Ajout en cours...' : 'Ajouter au panier'}</span>
-            </button>
-            
-            <button
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-red-500 hover:border-red-500 transition-colors"
-              aria-label="Ajouter aux favoris"
-            >
-              <Heart size={18} />
-            </button>
-            
-            <button
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-qwiik-blue hover:border-qwiik-blue transition-colors"
-              aria-label="Partager"
-            >
-              <Share2 size={18} />
-            </button>
           </div>
         </div>
       </div>
-      
-      {/* Similar Products */}
-      <section className="mt-16">
-        <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
-        <div className="product-grid">
-          {similarProducts.map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
+    );
+  }
+
+  if (!product) {
+    return null;
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="relative">
+          <div className="sticky top-24">
+            <div className="relative aspect-w-1 aspect-h-1 rounded-lg overflow-hidden mb-4">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-auto object-cover rounded-lg"
+              />
+              <div className="absolute top-4 right-4 z-10">
+                <FavoriteButton productId={product.id} />
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+
+        <div className="space-y-6">
+          <div>
+            <Badge
+              variant="secondary"
+              className="mb-2 uppercase tracking-wider text-xs font-medium"
+            >
+              {product.category}
+            </Badge>
+            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <div className="flex items-center mt-2 space-x-2">
+              <div className="flex items-center">
+                {Array(5)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "w-4 h-4",
+                        i < Math.floor(product.rating)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                      )}
+                    />
+                  ))}
+              </div>
+              <span className="text-sm text-gray-500">
+                ({product.reviewCount} avis)
+              </span>
+            </div>
+          </div>
+
+          <div className="text-2xl font-bold">{formatPrice(product.price)}</div>
+
+          <div className="flex items-center text-sm text-gray-600">
+            <Truck className="mr-2 h-4 w-4" />
+            <span>
+              Livraison en{" "}
+              <span className="font-medium">{product.deliveryTime}</span>
+            </span>
+          </div>
+
+          <Card className="p-4 mt-4">
+            <div className="flex items-center">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={decreaseQuantity}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="mx-4 font-medium text-lg w-6 text-center">
+                {quantity}
+              </span>
+              <Button variant="outline" size="icon" onClick={increaseQuantity}>
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={handleAddToCart}
+                className="ml-4 flex-1 py-6"
+              >
+                Ajouter au panier
+              </Button>
+            </div>
+          </Card>
+
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-4">Description</h2>
+            <p className="text-gray-600">
+              {product.description ||
+                "Le produit parfait pour votre quotidien. Qualité premium et performances exceptionnelles garanties."}
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-4">Caractéristiques</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-2">
+              <li>Haute qualité</li>
+              <li>Facile à utiliser</li>
+              <li>Durable et fiable</li>
+              <li>Design moderne</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {relatedProducts.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
+          <FeaturedProducts products={relatedProducts} />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,68 +1,67 @@
 
-import React from 'react';
-import { Heart } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { addToFavorites, removeFromFavorites, isFavorite } from '../utils/data';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect, useContext } from "react";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import FavoritesService from "@/services/FavoritesService";
+import { AuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-type FavoriteButtonProps = {
+interface FavoriteButtonProps {
   productId: string;
   className?: string;
-};
+}
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({ productId, className = '' }) => {
-  const { currentUser, isAuthenticated } = useAuth();
+const FavoriteButton = ({ productId, className }: FavoriteButtonProps) => {
+  const { user } = useContext(AuthContext);
   const { toast } = useToast();
-  const [isFav, setIsFav] = React.useState(false);
-  
-  React.useEffect(() => {
-    if (currentUser) {
-      setIsFav(isFavorite(currentUser.id, productId));
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setIsFavorite(FavoritesService.isFavorite(productId));
     }
-  }, [currentUser, productId]);
-  
-  const handleToggleFavorite = () => {
-    if (!isAuthenticated) {
+  }, [productId, user]);
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
       toast({
         title: "Connexion requise",
-        description: "Veuillez vous connecter pour ajouter des produits à vos favoris.",
-        variant: "destructive"
+        description: "Vous devez être connecté pour ajouter des favoris.",
+        variant: "destructive",
       });
       return;
     }
     
-    if (isFav) {
-      removeFromFavorites(currentUser!.id, productId);
-      setIsFav(false);
-      toast({
-        title: "Retiré des favoris",
-        description: "Le produit a été retiré de vos favoris."
-      });
-    } else {
-      addToFavorites(currentUser!.id, productId);
-      setIsFav(true);
-      toast({
-        title: "Ajouté aux favoris",
-        description: "Le produit a été ajouté à vos favoris."
-      });
-    }
+    const newStatus = FavoritesService.toggleFavorite(productId);
+    setIsFavorite(newStatus);
+    
+    toast({
+      title: newStatus ? "Ajouté aux favoris" : "Retiré des favoris",
+      description: newStatus 
+        ? "Ce produit a été ajouté à vos favoris." 
+        : "Ce produit a été retiré de vos favoris.",
+      variant: "default",
+    });
   };
-  
+
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
+      className={cn("rounded-full", className)}
       onClick={handleToggleFavorite}
-      className={`p-2 rounded-full ${
-        isFav 
-          ? 'bg-red-50 text-red-500 hover:bg-red-100' 
-          : 'bg-gray-50 hover:bg-gray-100'
-      } transition-colors ${className}`}
-      aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
     >
-      <Heart 
-        size={20} 
-        className={isFav ? 'fill-current' : ''}
+      <Heart
+        className={cn(
+          "h-6 w-6 transition-colors",
+          isFavorite ? "fill-red-500 text-red-500" : "text-gray-500"
+        )}
       />
-    </button>
+    </Button>
   );
 };
 
