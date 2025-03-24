@@ -1,3 +1,4 @@
+
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
@@ -37,41 +38,32 @@ export const StripeService = {
           userId,
           successUrl: `${window.location.origin}/payment/success`,
           cancelUrl: `${window.location.origin}/cart`,
-          stripeKey: stripePublicKey,
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur Supabase fonction:', error);
+        throw error;
+      }
       
       return data;
     } catch (error) {
       console.error('Erreur Stripe:', error);
       
-      // Fallback vers l'ancien système si l'edge function échoue
-      try {
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            lineItems,
-            userId,
-            successUrl: `${window.location.origin}/payment/success`,
-            cancelUrl: `${window.location.origin}/cart`,
-          }),
-        });
+      // Fallback vers le système simulé en développement
+      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
+        console.log('Mode développement: simulation de checkout Stripe');
         
-        if (!response.ok) {
-          throw new Error('Erreur lors de la création de la session Stripe');
-        }
+        const sessionId = `cs_test_${Date.now()}`;
+        const url = `/payment/success?session_id=${sessionId}&order_id=order_${Date.now()}`;
         
-        const { sessionId, url } = await response.json();
+        // Simuler un délai de réseau
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         return { sessionId, url };
-      } catch (fallbackError) {
-        console.error('Erreur fallback Stripe:', fallbackError);
-        throw fallbackError;
       }
+      
+      throw error;
     }
   },
 

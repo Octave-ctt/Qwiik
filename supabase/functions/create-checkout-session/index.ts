@@ -3,8 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@12.0.0";
 
-// Pour utiliser cette fonction, il faut définir ces variables d'environnement dans votre projet Supabase
-const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
+// Variables d'environnement de Supabase
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
@@ -21,6 +20,9 @@ serve(async (req) => {
   }
 
   try {
+    // Initialiser le client Supabase
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
     // Récupérer les données de la requête
     const { lineItems, userId, successUrl, cancelUrl } = await req.json();
     
@@ -29,7 +31,20 @@ serve(async (req) => {
       throw new Error("Données manquantes pour créer la session Stripe");
     }
 
-    // Initialiser Stripe
+    // Récupérer la clé secrète Stripe depuis la table 'secrets'
+    const { data: secretData, error: secretError } = await supabase
+      .from('secrets')
+      .select('value')
+      .eq('name', 'STRIPE_SECRET_KEY')
+      .single();
+
+    if (secretError || !secretData) {
+      throw new Error("Impossible de récupérer la clé secrète Stripe");
+    }
+
+    const STRIPE_SECRET_KEY = secretData.value;
+
+    // Initialiser Stripe avec la clé récupérée
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: "2022-11-15",
       httpClient: Stripe.createFetchHttpClient(),
@@ -47,21 +62,17 @@ serve(async (req) => {
       },
     });
     
-    // Initialiser le client Supabase pour enregistrer la session
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Enregistrer la session dans la base de données (si nécessaire)
-    // Vous pourriez vouloir créer une table "stripe_sessions" pour suivre ces sessions
-    // const { error } = await supabase.from("stripe_sessions").insert({
-    //   session_id: session.id,
-    //   user_id: userId,
-    //   amount_total: session.amount_total,
-    //   created_at: new Date().toISOString(),
-    // });
-    // 
-    // if (error) {
-    //   console.error("Erreur d'enregistrement de la session:", error);
-    // }
+    // Enregistrer la session dans Supabase si nécessaire
+    await supabase
+      .from("orders")
+      .insert({
+        user_id: userId,
+        session_id: session.id,
+        status: 'pending',
+        amount_total: session.amount_total,
+        created_at: new Date().toISOString(),
+      })
+      .select();
 
     // Retourner les informations de la session au client
     return new Response(
