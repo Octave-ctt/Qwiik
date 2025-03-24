@@ -8,15 +8,15 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null;
 export const getSupabase = () => {
   if (supabaseInstance) return supabaseInstance;
   
-  // Vérifier si les variables d'environnement Supabase sont disponibles via import.meta.env
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Vérifier si les variables d'environnement Supabase sont disponibles via import.meta.env ou window
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || window.SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
 
   // Vérification de la présence des variables Supabase
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Variables Supabase manquantes. Veuillez vous connecter via l\'intégration native Lovable.');
     
-    // Retourner un client vide avec des méthodes simulées pour éviter les erreurs
+    // Retourner un client simulé avec des méthodes factices pour éviter les erreurs
     // @ts-ignore - client simulé pour le développement
     return {
       auth: {
@@ -36,6 +36,8 @@ export const getSupabase = () => {
       })
     };
   }
+
+  console.log('Initialisation de Supabase avec:', { supabaseUrl });
 
   // Créer et mettre en cache le client Supabase
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);

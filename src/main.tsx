@@ -5,11 +5,18 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 
-// Définir la clé de Stripe comme variable globale si non définie
+// Définir les variables globales pour Supabase et Stripe si non définies dans l'environnement
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   // Utiliser une clé publique de test par défaut
   // Note: C'est une clé de test, donc elle peut être exposée dans le code
   window.STRIPE_PUBLIC_KEY = 'pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu';
+}
+
+// Valeurs de test pour Supabase en mode développement
+if (!import.meta.env.VITE_SUPABASE_URL) {
+  window.SUPABASE_URL = 'https://test-supabase-url.supabase.co';
+  window.SUPABASE_ANON_KEY = 'test-anon-key';
+  console.log('Utilisation de valeurs de test pour Supabase. Connectez-vous via l\'intégration native Lovable pour de vraies valeurs.');
 }
 
 // Register service worker
