@@ -9,7 +9,7 @@ import FavoritesPage from "../components/account/FavoritesPage";
 import { Home, Key, MapPin, ShoppingBag, User } from "lucide-react";
 
 const AccountPage = () => {
-  const { currentUser, isAuthenticated, loading } = useContext(AuthContext);
+  const { currentUser, isAuthenticated, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [savedAddress, setSavedAddress] = useState<any>(null);
 
@@ -22,15 +22,6 @@ const AccountPage = () => {
   }, []);
 
   // Show loading state while auth is being checked
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">Mon compte</h1>
-        <p className="mb-4">Chargement...</p>
-      </div>
-    );
-  }
-
   if (!isAuthenticated || !currentUser) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -109,7 +100,6 @@ const AccountPage = () => {
           
           <div className="pt-4">
             <Button onClick={() => {
-              const { logout } = useContext(AuthContext);
               logout();
               navigate('/');
             }} variant="destructive" className="w-full sm:w-auto">

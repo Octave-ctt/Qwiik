@@ -2,8 +2,8 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 
-// Utilisera la clé depuis les variables d'environnement en production
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx';
+// Utiliser la clé publique Stripe depuis les variables d'environnement
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu';
 const stripePromise = loadStripe(stripePublicKey);
 
 export interface CheckoutSessionResponse {
@@ -30,12 +30,12 @@ export const StripeService = {
     }));
 
     try {
-      // En mode développement, utiliser le serveur mock
-      if (import.meta.env.DEV) {
+      // En mode développement ou en test, utiliser le serveur mock
+      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
+        console.log('Mode développement détecté - simulation du paiement Stripe');
         const mockResponse = await StripeService.simulateBackendCheckout(items);
         
         // Simuler la redirection vers Stripe en redirigeant vers la page de succès
-        // Dans un environnement réel, Stripe gérerait cette redirection
         setTimeout(() => {
           window.location.href = '/payment/success';
         }, 1500);
@@ -44,6 +44,7 @@ export const StripeService = {
       }
 
       // En production, appeler l'API backend
+      console.log('Appel à l\'API de paiement Stripe');
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
@@ -73,7 +74,7 @@ export const StripeService = {
     }
 
     // En mode développement, simuler la redirection
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
       console.log('Redirection vers Stripe avec session ID:', sessionId);
       // Simuler la redirection vers Stripe en redirigeant vers la page de succès
       setTimeout(() => {
@@ -98,7 +99,7 @@ export const StripeService = {
     // Cette fonction simule ce qui se passerait côté serveur
     // Elle ne devrait jamais être utilisée en production
     
-    // En mode développement, nous simulons la réponse comme si elle venait du backend
+    // Simulation de traitement de commande
     console.log('Éléments à acheter:', items);
     
     // Simuler une réponse de l'API

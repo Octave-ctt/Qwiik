@@ -36,6 +36,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
         throw new Error("Card element not found");
       }
 
+      // Utiliser des informations de test qui fonctionnent toujours en mode test
+      // (numéro de carte: 4242 4242 4242 4242, date future, CVC: 3 chiffres)
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
@@ -94,6 +96,17 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
           }}
           className="p-3 border border-gray-200 rounded-md"
         />
+        
+        <div className="mt-2">
+          <p className="text-sm text-gray-600">
+            Pour tester, utilisez ces informations:
+          </p>
+          <ul className="text-xs text-gray-500 list-disc pl-4 mt-1">
+            <li>Numéro: 4242 4242 4242 4242</li>
+            <li>Date: n'importe quelle date future</li>
+            <li>CVC: n'importe quels 3 chiffres</li>
+          </ul>
+        </div>
         
         {cardError && (
           <div className="mt-2 p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200 flex items-start">
