@@ -7,6 +7,9 @@ import { supabase } from '../lib/supabase';
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_test_51R48HiBD1jNEQIjBKEt8E1pNwyupyqIfZQkvx0yYB1n3BR849TTNNHU6E3Ryk4mwuqDcc3912o8Ke3zhPvpWujet008AgI4VyT';
 const stripePromise = loadStripe(stripePublicKey);
 
+// URL de la fonction Edge Supabase
+const SUPABASE_FUNCTION_URL = 'https://ttjqnpfoulphvrckltim.functions.supabase.co/create-checkout-session';
+
 export interface CheckoutSessionResponse {
   sessionId: string;
   url: string;
@@ -31,21 +34,30 @@ export const StripeService = {
     }));
     
     try {
-      // En production, utiliser l'edge function Supabase
-      console.log('Appel de la fonction Edge Supabase pour créer une session Stripe');
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { 
+      // Au lieu d'utiliser supabase.functions.invoke, appeler directement l'URL de la fonction
+      console.log('Appel direct de la fonction Edge Supabase pour créer une session Stripe');
+      
+      const response = await fetch(SUPABASE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
+        },
+        body: JSON.stringify({ 
           lineItems,
           userId,
           successUrl: `${window.location.origin}/payment/success`,
           cancelUrl: `${window.location.origin}/cart`,
-        }
+        }),
       });
       
-      if (error) {
-        console.error('Erreur Supabase fonction:', error);
-        throw new Error(`Erreur lors de la création de la session Stripe: ${error.message}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erreur réponse fonction:', errorData);
+        throw new Error(`Erreur HTTP ${response.status}: ${errorData.error || response.statusText}`);
       }
+      
+      const data = await response.json();
       
       if (!data || !data.sessionId || !data.url) {
         throw new Error('Réponse invalide de la fonction Stripe');
