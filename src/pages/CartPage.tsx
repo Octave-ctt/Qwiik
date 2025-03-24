@@ -1,5 +1,5 @@
 
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -7,6 +7,7 @@ import { CartContext } from '../contexts/CartContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { StripeService } from '../services/StripeService';
 import { Button } from '@/components/ui/button';
+import AuthModal from '../components/auth/AuthModal';
 
 const CartPage = () => {
   const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useContext(CartContext);
@@ -14,17 +15,7 @@ const CartPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
-  useEffect(() => {
-    if (!isAuthenticated && !currentUser) {
-      toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour accéder à votre panier."
-      });
-      navigate('/');
-    }
-  }, [isAuthenticated, currentUser, navigate, toast]);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   
   const handleRemoveItem = async (productId: string) => {
     await removeFromCart(productId);
@@ -36,11 +27,8 @@ const CartPage = () => {
   };
   
   const handleStripeCheckout = async () => {
-    if (!currentUser) {
-      toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour effectuer un achat."
-      });
+    if (!isAuthenticated || !currentUser) {
+      setAuthModalOpen(true);
       return;
     }
     
@@ -79,14 +67,6 @@ const CartPage = () => {
   const subtotal = getCartTotal();
   const deliveryFee = subtotal >= 35 ? 0 : 4.99;
   const total = subtotal + deliveryFee;
-
-  if (!isAuthenticated || !currentUser) {
-    return (
-      <div className="page-container py-8 animate-fade-in text-center">
-        <h1 className="text-2xl font-bold mb-4">Chargement du panier...</h1>
-      </div>
-    );
-  }
 
   return (
     <div className="page-container py-8 animate-fade-in">
@@ -231,15 +211,21 @@ const CartPage = () => {
                   className="w-full py-3 flex items-center justify-center space-x-2"
                 >
                   <CreditCard size={18} />
-                  <span>{isProcessing ? 'Traitement en cours...' : 'Payer avec Stripe'}</span>
+                  <span>
+                    {isAuthenticated 
+                      ? (isProcessing ? 'Traitement en cours...' : 'Payer avec Stripe')
+                      : 'Se connecter pour payer'}
+                  </span>
                 </Button>
                 
-                <Link 
-                  to="/checkout"
-                  className="btn-secondary w-full py-3 flex items-center justify-center space-x-2"
-                >
-                  <span>Passer à la commande</span>
-                </Link>
+                {isAuthenticated && (
+                  <Link 
+                    to="/checkout"
+                    className="btn-secondary w-full py-3 flex items-center justify-center space-x-2"
+                  >
+                    <span>Passer à la commande</span>
+                  </Link>
+                )}
               </div>
               
               <div className="mt-4 text-xs text-center text-gray-500">
@@ -262,6 +248,13 @@ const CartPage = () => {
           </Link>
         </div>
       )}
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialView="login"
+      />
     </div>
   );
 };

@@ -17,7 +17,13 @@ export const getSupabase = () => {
       supabaseUrl: supabaseUrl ? 'définie' : 'non définie', 
       supabaseAnonKey: supabaseAnonKey ? 'définie' : 'non définie' 
     });
-    throw new Error("Les variables Supabase ne sont pas définies");
+    // Utiliser des valeurs par défaut si non définies
+    const defaultUrl = 'https://ttjqnpfoulphvrckltim.supabase.co';
+    const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0anFucGZvdWxwaHZyY2tsdGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTQ0NDYsImV4cCI6MjA1ODM5MDQ0Nn0.qaYK2zPjE8vQs4UCNGXYQqkBjJfwX073UoUdHXEH0bI';
+    
+    console.log('Utilisation des valeurs par défaut pour Supabase');
+    supabaseInstance = createClient(defaultUrl, defaultKey);
+    return supabaseInstance;
   }
 
   // Créer et mettre en cache le client Supabase

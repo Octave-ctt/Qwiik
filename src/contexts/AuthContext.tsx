@@ -85,11 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Si le profil existe, l'utiliser
       if (profiles) {
         setCurrentUser({
-          id: profiles.id,
+          id: profiles.id as string,
           email: user?.email || '',
-          name: profiles.name || '',
-          addresses: profiles.addresses || [],
-          favorites: profiles.favorites || []
+          name: profiles.name as string || '',
+          addresses: profiles.addresses as any[] || [],
+          favorites: profiles.favorites as string[] || []
         });
       } else {
         // Sinon, créer un profil par défaut
@@ -97,8 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: userId,
           email: user?.email || '',
           name: user?.email?.split('@')[0] || 'Utilisateur',
-          addresses: [],
-          favorites: []
+          addresses: [] as any[],
+          favorites: [] as string[]
         };
         
         // Créer le profil dans la base de données

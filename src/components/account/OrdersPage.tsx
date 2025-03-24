@@ -7,21 +7,23 @@ import { AuthContext } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+type OrderItem = {
+  id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  product: {
+    name: string;
+    image: string;
+  };
+};
+
 type Order = {
   id: string;
   created_at: string;
   status: string;
   total: number;
-  items: Array<{
-    id: string;
-    product_id: string;
-    quantity: number;
-    price: number;
-    product: {
-      name: string;
-      image: string;
-    };
-  }>;
+  items: OrderItem[];
 };
 
 const OrdersPage = () => {
@@ -50,11 +52,17 @@ const OrdersPage = () => {
       
       if (ordersError) throw ordersError;
       
+      if (!ordersData) {
+        setOrders([]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Pour chaque commande, récupérer les articles
       const ordersWithItems = await Promise.all(ordersData.map(async (order) => {
         const { data: itemsData, error: itemsError } = await supabase
           .from('order_items')
-          .select('*, product:product_id(*)')
+          .select('*, product:products(id, name, image)')
           .eq('order_id', order.id);
         
         if (itemsError) throw itemsError;
@@ -62,7 +70,7 @@ const OrdersPage = () => {
         return {
           ...order,
           items: itemsData || []
-        };
+        } as Order;
       }));
       
       setOrders(ordersWithItems);
