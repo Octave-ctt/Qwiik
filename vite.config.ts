@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Qwiik',
@@ -39,9 +40,9 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       strategies: 'injectManifest',
-      filename: 'sw.js',
+      filename: 'sw.js', // fichier généré (swDest)
       injectManifest: {
-        swSrc: 'public/sw.js',
+        swSrc: 'src/custom-sw.js', // fichier source (différent nom)
         swDest: 'dist/sw.js',
         globDirectory: 'dist',
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
