@@ -31,21 +31,6 @@ export const StripeService = {
     }));
     
     try {
-      // Vérifier si nous sommes en mode développement ou prévisualisation
-      const isDevOrPreview = import.meta.env.DEV || window.location.hostname.includes('lovable');
-      
-      if (isDevOrPreview) {
-        console.log('Mode développement/prévisualisation: simulation de checkout Stripe');
-        
-        // Simuler un délai de réseau
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const sessionId = `cs_test_${Date.now()}`;
-        const url = `/checkout?simulation=true&session_id=${sessionId}`;
-        
-        return { sessionId, url };
-      }
-      
       // En production, utiliser l'edge function Supabase
       console.log('Appel de la fonction Edge Supabase pour créer une session Stripe');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
@@ -70,17 +55,7 @@ export const StripeService = {
       return data;
     } catch (error) {
       console.error('Erreur Stripe:', error);
-      
-      // En cas d'erreur en production, notifier l'utilisateur
-      if (!(import.meta.env.DEV || window.location.hostname.includes('lovable'))) {
-        throw error; // En production, propager l'erreur
-      }
-      
-      // En développement, utiliser la simulation
-      console.log('Erreur détectée, utilisation du mode simulation');
-      const sessionId = `cs_test_${Date.now()}`;
-      const url = `/checkout?simulation=true&session_id=${sessionId}`;
-      return { sessionId, url };
+      throw error;
     }
   },
 
@@ -88,15 +63,6 @@ export const StripeService = {
    * Redirige l'utilisateur vers la page de paiement Stripe
    */
   redirectToCheckout: async (sessionId: string): Promise<void> => {
-    const isDevOrPreview = import.meta.env.DEV || window.location.hostname.includes('lovable');
-    
-    if (isDevOrPreview) {
-      // En mode développement ou prévisualisation, rediriger vers la page de checkout locale
-      console.log('Redirection vers simulation Stripe avec session ID:', sessionId);
-      window.location.href = `/checkout?simulation=true&session_id=${sessionId}`;
-      return;
-    }
-    
     // En production, rediriger vers Stripe
     try {
       const stripe = await stripePromise;
@@ -122,31 +88,20 @@ export const StripeService = {
    */
   updateOrderStatus: async (orderId: string, status: 'completed' | 'cancelled'): Promise<void> => {
     try {
-      // En mode développement, simplement simuler la mise à jour
-      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
-        console.log(`Mise à jour du statut de la commande ${orderId} à ${status}`);
+      // En production, mettre à jour la commande dans Supabase
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
         
-        // Si la commande est terminée, simuler le vidage du panier
-        if (status === 'completed') {
-          console.log('Panier vidé après commande réussie');
-          localStorage.removeItem('cart');
-        }
-      } else {
-        // En production, mettre à jour la commande dans Supabase
-        const { error } = await supabase
-          .from('orders')
-          .update({ status })
-          .eq('id', orderId);
-          
-        if (error) {
-          console.error('Erreur lors de la mise à jour de la commande:', error);
-          throw error;
-        }
-        
-        // Si la commande est terminée, vider le panier
-        if (status === 'completed') {
-          localStorage.removeItem('cart');
-        }
+      if (error) {
+        console.error('Erreur lors de la mise à jour de la commande:', error);
+        throw error;
+      }
+      
+      // Si la commande est terminée, vider le panier
+      if (status === 'completed') {
+        localStorage.removeItem('cart');
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la commande:', error);

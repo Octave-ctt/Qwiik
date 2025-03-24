@@ -9,12 +9,18 @@ interface StripePaymentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
   isSimulation?: boolean;
-  // Add the missing properties
   lineItems?: any[];
   metadata?: any;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess, onCancel, isSimulation = false, lineItems, metadata }) => {
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ 
+  amount, 
+  onSuccess, 
+  onCancel, 
+  isSimulation = false, 
+  lineItems, 
+  metadata 
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,7 +43,6 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
 
     try {
       // Dans un environnement réel, vous appelleriez votre backend pour créer un intent
-      // Mais pour cette démo nous simulons simplement le processus
       const cardElement = elements.getElement(CardElement);
       
       if (!cardElement) {
