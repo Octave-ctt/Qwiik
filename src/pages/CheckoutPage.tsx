@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -58,7 +57,6 @@ const CheckoutPage = () => {
       });
     }
     
-    // Préremplir le formulaire avec les informations de l'utilisateur
     if (currentUser) {
       setName(currentUser.name || '');
       setContactInfo(currentUser.email || '');
@@ -118,7 +116,6 @@ const CheckoutPage = () => {
     navigate('/account/orders');
   };
 
-  // Préparer les informations pour Stripe
   const getLineItems = () => {
     return cartItems.map(item => ({
       price_data: {
@@ -136,7 +133,6 @@ const CheckoutPage = () => {
     }));
   };
 
-  // Préparer les métadonnées de commande
   const getOrderMetadata = () => {
     return {
       deliveryAddress: {
@@ -612,3 +608,4 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
+

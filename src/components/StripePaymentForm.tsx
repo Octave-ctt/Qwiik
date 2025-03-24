@@ -9,9 +9,12 @@ interface StripePaymentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
   isSimulation?: boolean;
+  // Add the missing properties
+  lineItems?: any[];
+  metadata?: any;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess, onCancel, isSimulation = false }) => {
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess, onCancel, isSimulation = false, lineItems, metadata }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
