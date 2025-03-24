@@ -73,18 +73,18 @@ VALUES
   ('Maison & Déco', 'home', 'https://images.unsplash.com/photo-1591130901921-3f0652bb3915?q=80&w=1000')
 ON CONFLICT (slug) DO NOTHING;
 
--- Insertion des produits d'exemple
+-- Nettoyage des anciens produits
+TRUNCATE products CASCADE;
+
+-- Insertion des produits d'exemple (seulement 2 par catégorie)
 INSERT INTO products (name, description, price, image, category, rating, review_count, delivery_time)
 VALUES
-  ('Écouteurs sans fil', 'Écouteurs Bluetooth de haute qualité', 49.99, 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1000', 'tech', 4.8, 342, '30 min'),
-  ('Bracelet connecté fitness', 'Suivi de votre activité physique et santé', 39.99, 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=1000', 'tech', 4.6, 187, '30 min'),
-  ('Crème hydratante visage', 'Formule enrichie en vitamines', 34.99, 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=1000', 'beauty', 4.9, 276, '30 min'),
-  ('Lampe de table design', 'Éclairage moderne pour votre intérieur', 49.99, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=1000', 'home', 4.7, 112, '30 min'),
-  ('Google Home Mini', 'Assistant vocal intelligent', 29.99, 'https://images.unsplash.com/photo-1512446816042-444d641267d4?q=80&w=1000', 'tech', 4.9, 521, '30 min'),
-  ('Manette PlayStation 5', 'Manette sans fil pour console PS5', 59.99, 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=1000', 'tech', 4.8, 198, '30 min'),
-  ('Mini enceinte Bluetooth', 'Son puissant dans un format compact', 19.99, 'https://images.unsplash.com/photo-1589003077984-894e133dabab?q=80&w=1000', 'tech', 4.6, 165, '30 min'),
-  ('Parfum de luxe homme', 'Fragrance élégante et raffinée', 89.99, 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000', 'beauty', 4.9, 289, '30 min'),
-  ('Chargeur sans fil', 'Charge rapide pour smartphones compatibles', 24.99, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1000', 'tech', 4.7, 345, '30 min');
+  ('Écouteurs sans fil', 'Écouteurs Bluetooth de haute qualité avec une excellente autonomie et une qualité sonore exceptionnelle. Parfaits pour le sport et les déplacements quotidiens.', 49.99, 'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1000', 'tech', 4.8, 342, '30 min'),
+  ('Bracelet connecté fitness', 'Suivi de votre activité physique et santé avec mesure du rythme cardiaque, comptage des pas et suivi du sommeil. Résistant à l''eau et avec une batterie longue durée.', 39.99, 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=1000', 'tech', 4.6, 187, '30 min'),
+  ('Crème hydratante visage', 'Formule enrichie en vitamines et acide hyaluronique pour une hydratation intense. Convient à tous les types de peau et s''utilise matin et soir pour un teint éclatant.', 34.99, 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=1000', 'beauty', 4.9, 276, '30 min'),
+  ('Parfum de luxe unisexe', 'Fragrance élégante et raffinée aux notes boisées et florales. Tenue longue durée pour vous accompagner toute la journée avec un parfum subtil et envoûtant.', 89.99, 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000', 'beauty', 4.9, 289, '30 min'),
+  ('Lampe de table design', 'Éclairage moderne pour votre intérieur avec intensité réglable. Son design épuré s''intègre parfaitement dans tous les styles de décoration pour créer une ambiance chaleureuse.', 49.99, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=1000', 'home', 4.7, 112, '30 min'),
+  ('Vase décoratif en céramique', 'Pièce artisanale élégante pour sublimer vos fleurs et plantes. Disponible en plusieurs tailles et couleurs pour s''adapter à votre décoration intérieure.', 29.99, 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1000', 'home', 4.8, 95, '30 min');
 
 -- Activer RLS sur toutes les tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

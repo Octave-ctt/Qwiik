@@ -123,75 +123,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Désactiver la vérification d'email pour le développement
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) {
-        // Si l'erreur est que l'email n'est pas confirmé, essayer de se connecter quand même
-        if (error.message === "Email not confirmed") {
-          // Tentative de récupération du user_id sans confirmation d'email
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, email')
-            .eq('email', email)
-            .single();
-
-          if (userData) {
-            // Vérification et conversion explicite du type pour éviter l'erreur TS2322
-            const userId = typeof userData.id === 'string' ? userData.id : `dev-${Date.now()}`;
-            
-            // Créer manuellement un profil utilisateur pour le mode développement
-            const devProfile: UserProfile = {
-              id: userId,
-              email: email,
-              name: email.split('@')[0] || 'Utilisateur',
-              addresses: [],
-              favorites: []
-            };
-            
-            // Mettre à jour l'état d'authentification manuellement
-            setCurrentUser(devProfile);
-            
-            toast({
-              title: "Connexion réussie",
-              description: "Vous êtes maintenant connecté à votre compte. (Mode développement: email non confirmé)"
-            });
-            return;
-          }
-        }
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté à votre compte."
       });
     } catch (error: any) {
-      // Si l'erreur est "Email not confirmed", on permet quand même la connexion en mode dev
-      if (error.message === "Email not confirmed") {
-        // Créer un profil utilisateur temporaire pour le mode développement
-        const devProfile: UserProfile = {
-          id: `dev-${Date.now()}`,
-          email: email,
-          name: email.split('@')[0] || 'Utilisateur',
-          addresses: [],
-          favorites: []
-        };
-        
-        // Mettre à jour l'état d'authentification manuellement
-        setCurrentUser(devProfile);
-        
-        toast({
-          title: "Info connexion",
-          description: "En mode développement, votre compte est considéré comme connecté même sans confirmation d'email."
-        });
-        // On ne relance pas l'erreur pour permettre à l'UI de continuer
-        return;
-      }
-      
       console.error('Erreur de connexion:', error);
       toast({
         title: "Erreur de connexion",
@@ -204,7 +147,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (email: string, password: string, name: string) => {
     try {
-      // Inscrivez l'utilisateur sans confirmation d'email (pour le développement)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -218,19 +160,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // En mode développement, considérer l'utilisateur comme inscrit immédiatement
-      // Créer un profil utilisateur temporaire
-      const devProfile: UserProfile = {
-        id: `dev-${Date.now()}`,
-        email: email,
-        name: name || email.split('@')[0] || 'Utilisateur',
-        addresses: [],
-        favorites: []
-      };
-      
-      // Mettre à jour l'état d'authentification manuellement
-      setCurrentUser(devProfile);
-      
       toast({
         title: "Inscription réussie",
         description: "Votre compte a été créé avec succès. Vous êtes maintenant connecté."
@@ -272,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
-    isAuthenticated: !!session || !!currentUser // Considérer l'utilisateur comme authentifié même en mode développement
+    isAuthenticated: !!session || !!currentUser
   };
 
   return (

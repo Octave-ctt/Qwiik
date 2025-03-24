@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { StripeService } from '../services/StripeService';
 import { AuthContext } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { supabase } from '../lib/supabase';
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -26,14 +27,31 @@ const PaymentSuccess = () => {
       }
 
       try {
-        // Si c'est une simulation (développement/prévisualisation)
-        const isSimulation = import.meta.env.DEV || window.location.hostname.includes('lovable');
-        
-        // Marquer la commande comme terminée
-        if (orderId) {
-          await StripeService.updateOrderStatus(orderId, 'completed');
-        } else if (isSimulation) {
-          console.log('Simulation: Commande marquée comme terminée');
+        // Mettre à jour le statut de la commande dans Supabase
+        if (isAuthenticated && currentUser) {
+          // Trouver la commande associée à cette session
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('session_id', sessionId)
+            .eq('user_id', currentUser.id)
+            .single();
+
+          if (orderError) {
+            console.error("Erreur lors de la recherche de la commande:", orderError);
+          } else if (orderData) {
+            // Mettre à jour le statut de la commande
+            const { error: updateError } = await supabase
+              .from('orders')
+              .update({ status: 'completed' })
+              .eq('id', orderData.id);
+
+            if (updateError) {
+              console.error("Erreur lors de la mise à jour du statut de la commande:", updateError);
+            } else {
+              console.log("Commande marquée comme terminée avec succès");
+            }
+          }
         }
 
         setIsProcessing(false);
@@ -53,11 +71,11 @@ const PaymentSuccess = () => {
       }
     };
 
-    // Si l'utilisateur est connecté ou en mode simulation, finaliser la commande
-    if (isAuthenticated || import.meta.env.DEV || window.location.hostname.includes('lovable')) {
+    // Si l'utilisateur est connecté, finaliser la commande
+    if (isAuthenticated) {
       completeOrder();
     } else {
-      // Si l'utilisateur n'est pas connecté en production, lui montrer un message
+      // Si l'utilisateur n'est pas connecté, lui montrer un message
       setError("Veuillez vous connecter pour finaliser votre commande");
       setIsProcessing(false);
     }
@@ -118,7 +136,7 @@ const PaymentSuccess = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/account">
+          <Link to="/account/orders">
             <Button variant="outline" className="w-full sm:w-auto flex items-center justify-center">
               <ShoppingBag className="mr-2" size={16} />
               Mes commandes

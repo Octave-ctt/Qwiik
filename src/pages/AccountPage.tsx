@@ -5,7 +5,6 @@ import { AuthContext } from "../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FavoritesPage from "../components/account/FavoritesPage";
 import OrdersPage from "../components/account/OrdersPage";
 import { Home, Key, MapPin, ShoppingBag, User } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -73,10 +72,9 @@ const AccountPage = () => {
       <h1 className="text-2xl font-bold mb-6">Mon compte</h1>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="profile">Profil</TabsTrigger>
           <TabsTrigger value="orders">Commandes</TabsTrigger>
-          <TabsTrigger value="favorites">Favoris</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile" className="space-y-6">
@@ -143,10 +141,6 @@ const AccountPage = () => {
         
         <TabsContent value="orders">
           <OrdersPage />
-        </TabsContent>
-        
-        <TabsContent value="favorites">
-          <FavoritesPage />
         </TabsContent>
       </Tabs>
     </div>

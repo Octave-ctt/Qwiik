@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -9,7 +10,6 @@ import StripePaymentForm from '../components/StripePaymentForm';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { sendOrderNotification } from '../services/NotificationService';
-import { addOrder } from '../utils/data';
 
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_live_51R48HiBD1jNEQIjBKEt8E1pNwyupyqIfZQkvx0yYB1n3BR849TTNNHU6E3Ryk4mwuqDcc3912o8Ke3zhPvpWujet008AgI4VyT';
 const stripePromise = loadStripe(stripePublicKey);
@@ -19,10 +19,12 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [addressError, setAddressError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState<'sms' | 'email'>('email');
-  const [contactInfo, setContactInfo] = useState('octave.catteau@gmail.com');
+  const [contactInfo, setContactInfo] = useState('');
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,10 +40,12 @@ const CheckoutPage = () => {
       const savedAddress = localStorage.getItem('userAddress');
       if (savedAddress) {
         try {
-          const { address: savedStreet, city: savedCity, zipCode: savedZipCode } = JSON.parse(savedAddress);
+          const { address: savedStreet, city: savedCity, zipCode: savedZipCode, name: savedName, phoneNumber: savedPhone } = JSON.parse(savedAddress);
           setAddress(savedStreet || '');
           setCity(savedCity || '');
           setZipCode(savedZipCode || '');
+          setName(savedName || '');
+          setPhoneNumber(savedPhone || '');
         } catch (error) {
           console.error('Failed to parse saved address:', error);
         }
@@ -53,21 +57,29 @@ const CheckoutPage = () => {
         description: "Ceci est une simulation du formulaire de paiement Stripe"
       });
     }
-  }, [isStripeSimulation, simulationSessionId, toast]);
+    
+    // Préremplir le formulaire avec les informations de l'utilisateur
+    if (currentUser) {
+      setName(currentUser.name || '');
+      setContactInfo(currentUser.email || '');
+    }
+  }, [isStripeSimulation, simulationSessionId, toast, currentUser]);
   
   const subtotal = getCartTotal();
-  const deliveryFee = 0.02;
+  const deliveryFee = 3.99;
   const total = subtotal + deliveryFee;
   
   const handleSubmitAddress = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!address || !city || !zipCode) {
+    if (!address || !city || !zipCode || !name || !phoneNumber) {
       setAddressError("Veuillez remplir tous les champs d'adresse avant de continuer.");
       return;
     }
     
-    localStorage.setItem('userAddress', JSON.stringify({ address, city, zipCode }));
+    localStorage.setItem('userAddress', JSON.stringify({ 
+      address, city, zipCode, name, phoneNumber 
+    }));
     
     setAddressError(null);
     setStep(2);
@@ -78,26 +90,17 @@ const CheckoutPage = () => {
     setStep(3);
     window.scrollTo(0, 0);
     
-    const orderAddress = {
-      id: `addr${Date.now()}`,
+    const deliveryAddress = {
+      name: name,
       street: address,
       city: city,
-      postalCode: zipCode,
-      country: 'France',
-      isDefault: false
+      zipCode: zipCode,
+      phoneNumber: phoneNumber
     };
-    
-    const orderId = addOrder(currentUser!.id, {
-      date: new Date(),
-      status: 'pending',
-      items: cartItems,
-      total: total,
-      deliveryAddress: orderAddress
-    });
     
     sendOrderNotification(
       {
-        id: orderId,
+        id: `ord-${Date.now()}`,
         total: total.toFixed(2),
         items: cartItems.length
       },
@@ -113,6 +116,43 @@ const CheckoutPage = () => {
     });
     clearCart();
     navigate('/account/orders');
+  };
+
+  // Préparer les informations pour Stripe
+  const getLineItems = () => {
+    return cartItems.map(item => ({
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: item.product.name,
+          images: [item.product.image],
+          metadata: {
+            productId: item.product.id
+          }
+        },
+        unit_amount: Math.round(item.product.price * 100)
+      },
+      quantity: item.quantity
+    }));
+  };
+
+  // Préparer les métadonnées de commande
+  const getOrderMetadata = () => {
+    return {
+      deliveryAddress: {
+        name: name,
+        street: address,
+        city: city,
+        zipCode: zipCode,
+        phoneNumber: phoneNumber
+      },
+      items: cartItems.map(item => ({
+        productId: item.product.id,
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price
+      }))
+    };
   };
 
   return (
@@ -175,6 +215,18 @@ const CheckoutPage = () => {
                   
                   <div className="space-y-4">
                     <div>
+                      <label htmlFor="name" className="block text-sm font-medium mb-1">Nom complet</label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Prénom et nom"
+                        className={addressError && !name ? "border-red-500" : ""}
+                      />
+                    </div>
+                    
+                    <div>
                       <label htmlFor="address" className="block text-sm font-medium mb-1">Adresse</label>
                       <Input
                         id="address"
@@ -209,6 +261,18 @@ const CheckoutPage = () => {
                         className={addressError && !zipCode ? "border-red-500" : ""}
                       />
                     </div>
+                    
+                    <div>
+                      <label htmlFor="phoneNumber" className="block text-sm font-medium mb-1">Numéro de téléphone</label>
+                      <Input
+                        id="phoneNumber"
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="Pour la livraison"
+                        className={addressError && !phoneNumber ? "border-red-500" : ""}
+                      />
+                    </div>
                   </div>
                   
                   {addressError && (
@@ -235,7 +299,7 @@ const CheckoutPage = () => {
                             checked={notificationMethod === 'email'}
                             onChange={() => {
                               setNotificationMethod('email');
-                              setContactInfo('octave.catteau@gmail.com');
+                              setContactInfo(currentUser?.email || '');
                             }}
                             className="mr-2"
                           />
@@ -248,7 +312,7 @@ const CheckoutPage = () => {
                             checked={notificationMethod === 'sms'}
                             onChange={() => {
                               setNotificationMethod('sms');
-                              setContactInfo('0651839483');
+                              setContactInfo(phoneNumber);
                             }}
                             className="mr-2"
                           />
@@ -373,6 +437,8 @@ const CheckoutPage = () => {
               <Elements stripe={stripePromise}>
                 <StripePaymentForm 
                   amount={total} 
+                  lineItems={getLineItems()}
+                  metadata={getOrderMetadata()}
                   onSuccess={handleStripeSuccess}
                   onCancel={() => {
                     if (isStripeSimulation) {

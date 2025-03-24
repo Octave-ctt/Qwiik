@@ -23,7 +23,7 @@ serve(async (req) => {
 
   try {
     // Récupérer les données de la requête
-    const { lineItems, userId, successUrl, cancelUrl } = await req.json();
+    const { lineItems, userId, successUrl, cancelUrl, metadata } = await req.json();
     
     // Vérifier que toutes les données nécessaires sont présentes
     if (!lineItems || !successUrl || !cancelUrl) {
@@ -66,6 +66,18 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
+    // Extraire les informations des articles pour la base de données
+    const orderItems = lineItems.map(item => ({
+      product_id: item.price_data?.product_data?.metadata?.productId,
+      name: item.price_data?.product_data?.name,
+      quantity: item.quantity,
+      price: Number(item.price_data?.unit_amount) / 100,
+      image: item.price_data?.product_data?.images?.[0] || ''
+    }));
+
+    // Calculer le total de la commande
+    const orderTotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
     // Créer une session Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -75,22 +87,51 @@ serve(async (req) => {
       cancel_url: cancelUrl,
       metadata: {
         userId: userId || "",
+        ...metadata
       },
     });
 
     // En cas de succès, enregistrer la commande dans Supabase si un userId est fourni
     if (userId) {
       try {
-        await supabase
+        // Créer une nouvelle commande
+        const { data: orderData, error: orderError } = await supabase
           .from("orders")
           .insert({
             user_id: userId,
             session_id: session.id,
             status: 'pending',
-            amount_total: session.amount_total ? session.amount_total / 100 : 0,
+            total: orderTotal,
+            delivery_address: metadata?.deliveryAddress || null,
             created_at: new Date().toISOString(),
-          });
-        console.log("Commande enregistrée avec succès");
+          })
+          .select('id')
+          .single();
+
+        if (orderError) {
+          console.error("Erreur lors de l'enregistrement de la commande:", orderError);
+          throw orderError;
+        }
+
+        if (orderData && orderData.id) {
+          // Enregistrer les éléments de la commande
+          const orderItemsWithOrderId = orderItems.map(item => ({
+            order_id: orderData.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+          }));
+
+          const { error: itemsError } = await supabase
+            .from("order_items")
+            .insert(orderItemsWithOrderId);
+
+          if (itemsError) {
+            console.error("Erreur lors de l'enregistrement des articles de commande:", itemsError);
+          } else {
+            console.log("Commande et articles enregistrés avec succès");
+          }
+        }
       } catch (orderError) {
         console.error("Erreur lors de l'enregistrement de la commande:", orderError);
         // On continue même si l'enregistrement échoue
