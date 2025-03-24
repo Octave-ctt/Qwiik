@@ -16,7 +16,7 @@ export const getSupabase = () => {
   console.log('Initialisation de Supabase avec URL:', SUPABASE_URL);
 
   // Créer et mettre en cache le client Supabase
-  supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -27,6 +27,3 @@ export const getSupabase = () => {
 
 // Pour la compatibilité avec le code existant
 export const supabase = getSupabase();
-
-// Re-exporter les types
-export type { Database };
