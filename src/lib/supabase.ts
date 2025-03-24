@@ -1,10 +1,13 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Fonction d'initialisation du client Supabase
-// Utilise une fonction qui est appelée au moment où nous avons besoin du client
-// plutôt qu'une initialisation immédiate
-const createSupabaseClient = () => {
+// Variable pour stocker l'instance du client Supabase
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
+
+// Fonction pour obtenir le client Supabase (lazy initialization)
+export const getSupabase = () => {
+  if (supabaseInstance) return supabaseInstance;
+  
   const supabaseUrl = window.SUPABASE_URL;
   const supabaseAnonKey = window.SUPABASE_ANON_KEY;
 
@@ -17,12 +20,19 @@ const createSupabaseClient = () => {
     throw new Error("Les variables Supabase ne sont pas définies");
   }
 
-  // Créer le client Supabase
-  return createClient(supabaseUrl, supabaseAnonKey);
+  // Créer et mettre en cache le client Supabase
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  return supabaseInstance;
 };
 
-// Exporter le client Supabase à la demande
-export const supabase = createSupabaseClient();
+// Pour la compatibilité avec le code existant
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(target, prop) {
+    const client = getSupabase();
+    // @ts-ignore
+    return client[prop];
+  }
+});
 
 // Types pour la base de données
 export type Database = {

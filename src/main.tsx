@@ -4,7 +4,6 @@ import App from './App.tsx'
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
-import { createClient } from '@supabase/supabase-js'
 
 // Définir les clés Supabase et Stripe comme variables globales
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -14,6 +13,7 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 }
 
 // Définir explicitement les variables Supabase avec les valeurs fournies
+// Les affecter au démarrage avant tout import de Supabase
 window.SUPABASE_URL = 'https://ttjqnpfoulphvrckltim.supabase.co';
 window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0anFucGZvdWxwaHZyY2tsdGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTQ0NDYsImV4cCI6MjA1ODM5MDQ0Nn0.qaYK2zPjE8vQs4UCNGXYQqkBjJfwX073UoUdHXEH0bI';
 
