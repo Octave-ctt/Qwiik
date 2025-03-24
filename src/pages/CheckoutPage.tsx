@@ -12,7 +12,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { sendOrderNotification } from '../services/NotificationService';
 import { addOrder } from '../utils/data';
 
-const stripePromise = loadStripe('pk_test_51R48HpB4m9hLsjhWC0CHFeQzsb0sBGGwA2503uiNCcuiFLHnuhvqqevIToVBFuh2wSKVCXTfmlBJlpnhLoVriO1T00X3VMqmdu');
+// Utiliser la clé publique Stripe depuis les variables d'environnement ou la variable globale
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_live_51R48HiBD1jNEQIjBKEt8E1pNwyupyqIfZQkvx0yYB1n3BR849TTNNHU6E3Ryk4mwuqDcc3912o8Ke3zhPvpWujet008AgI4VyT';
+const stripePromise = loadStripe(stripePublicKey);
 
 const CheckoutPage = () => {
   const [step, setStep] = useState(1);
