@@ -40,7 +40,12 @@ export const getSupabase = () => {
   console.log('Initialisation de Supabase avec:', { supabaseUrl });
 
   // Créer et mettre en cache le client Supabase
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+    }
+  });
   return supabaseInstance;
 };
 
@@ -57,6 +62,34 @@ export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          name: string | null;
+          addresses: any[] | null;
+          favorites: string[] | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+          addresses?: any[] | null;
+          favorites?: string[] | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          name?: string | null;
+          addresses?: any[] | null;
+          favorites?: string[] | null;
+          updated_at?: string | null;
+        };
+      };
       products: {
         Row: {
           id: string;
@@ -171,3 +204,4 @@ export type Database = {
     };
   };
 };
+
