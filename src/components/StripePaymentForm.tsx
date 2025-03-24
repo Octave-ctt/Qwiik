@@ -2,20 +2,25 @@
 import React, { useState } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CreditCard, Lock } from 'lucide-react';
 
 interface StripePaymentFormProps {
   amount: number;
   onSuccess: () => void;
   onCancel: () => void;
+  isSimulation?: boolean;
 }
 
-const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess, onCancel }) => {
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess, onCancel, isSimulation = false }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Champs supplémentaires pour la simulation complète
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -41,6 +46,10 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
+        billing_details: isSimulation ? {
+          name,
+          email,
+        } : undefined,
       });
 
       if (error) {
@@ -75,10 +84,53 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ amount, onSuccess
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {isSimulation && (
+        <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-center space-x-2 mb-2">
+            <Lock size={18} className="text-gray-500" />
+            <h3 className="font-medium">Informations personnelles</h3>
+          </div>
+          
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium mb-1">
+              Nom complet
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="John Doe"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="john.doe@example.com"
+              required
+            />
+          </div>
+        </div>
+      )}
+      
       <div className="p-4 border border-gray-200 rounded-lg">
-        <label className="block text-sm font-medium mb-2">
-          Informations de carte
-        </label>
+        <div className="flex items-center space-x-2 mb-2">
+          <CreditCard size={18} className="text-gray-500" />
+          <label className="block text-sm font-medium">
+            Informations de carte
+          </label>
+        </div>
+        
         <CardElement
           options={{
             style: {

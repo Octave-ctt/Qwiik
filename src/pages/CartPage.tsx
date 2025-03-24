@@ -1,6 +1,5 @@
-
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
@@ -47,18 +46,10 @@ const CartPage = () => {
         description: "Vous allez être redirigé vers la page de paiement"
       });
       
-      // En environnement de développement/prévisualisation, simuler directement la redirection
-      const isDevOrPreview = import.meta.env.DEV || window.location.hostname.includes('lovable');
-      if (isDevOrPreview) {
-        console.log("Mode développement/prévisualisation: redirection directe vers la page de succès");
-        setTimeout(() => {
-          navigate(`/payment/success?session_id=${sessionId}`);
-          setIsProcessing(false);
-        }, 1500);
-      } else {
-        // En production, rediriger réellement vers Stripe
-        await StripeService.redirectToCheckout(sessionId);
-      }
+      setTimeout(() => {
+        window.location.href = url;
+        setIsProcessing(false);
+      }, 1500);
       
     } catch (error) {
       setIsProcessing(false);
@@ -68,13 +59,6 @@ const CartPage = () => {
         description: "Un problème est survenu lors de la redirection vers la page de paiement.",
         variant: "destructive"
       });
-      
-      // Même en cas d'erreur, pour la prévisualisation, rediriger vers la page de succès
-      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
-        setTimeout(() => {
-          navigate(`/payment/success?session_id=cs_test_${Date.now()}`);
-        }, 1500);
-      }
     }
   };
   
@@ -99,7 +83,6 @@ const CartPage = () => {
       
       {cartItems.length > 0 ? (
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Cart Items */}
           <div className="md:col-span-2 space-y-4">
             {cartItems.map(({ product, quantity }) => (
               <div 
@@ -172,7 +155,6 @@ const CartPage = () => {
             ))}
           </div>
           
-          {/* Order Summary */}
           <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-subtle sticky top-24">
               <h2 className="text-lg font-bold mb-6">Récapitulatif</h2>
@@ -263,7 +245,6 @@ const CartPage = () => {
         </div>
       )}
       
-      {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

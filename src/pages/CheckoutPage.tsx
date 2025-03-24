@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { sendOrderNotification } from '../services/NotificationService';
 import { addOrder } from '../utils/data';
 
-// Utiliser la clé publique Stripe depuis les variables d'environnement ou la variable globale
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY || 'pk_live_51R48HiBD1jNEQIjBKEt8E1pNwyupyqIfZQkvx0yYB1n3BR849TTNNHU6E3Ryk4mwuqDcc3912o8Ke3zhPvpWujet008AgI4VyT';
 const stripePromise = loadStripe(stripePublicKey);
 
@@ -29,9 +28,35 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { cartItems, getCartTotal, clearCart } = useContext(CartContext);
   const { currentUser } = useAuth();
+  const [searchParams] = useSearchParams();
+  
+  const isStripeSimulation = searchParams.get('simulation') === 'true';
+  const simulationSessionId = searchParams.get('session_id');
+  
+  useEffect(() => {
+    if (isStripeSimulation && simulationSessionId) {
+      const savedAddress = localStorage.getItem('userAddress');
+      if (savedAddress) {
+        try {
+          const { address: savedStreet, city: savedCity, zipCode: savedZipCode } = JSON.parse(savedAddress);
+          setAddress(savedStreet || '');
+          setCity(savedCity || '');
+          setZipCode(savedZipCode || '');
+        } catch (error) {
+          console.error('Failed to parse saved address:', error);
+        }
+      }
+      
+      setStep(2);
+      toast({
+        title: "Simulation de paiement Stripe",
+        description: "Ceci est une simulation du formulaire de paiement Stripe"
+      });
+    }
+  }, [isStripeSimulation, simulationSessionId, toast]);
   
   const subtotal = getCartTotal();
-  const deliveryFee = 0.02; // Frais de livraison à 2 centimes comme demandé
+  const deliveryFee = 0.02;
   const total = subtotal + deliveryFee;
   
   const handleSubmitAddress = (e: React.FormEvent) => {
@@ -42,7 +67,6 @@ const CheckoutPage = () => {
       return;
     }
     
-    // Enregistrer l'adresse (dans un cas réel, cela serait sauvegardé dans une base de données)
     localStorage.setItem('userAddress', JSON.stringify({ address, city, zipCode }));
     
     setAddressError(null);
@@ -54,7 +78,6 @@ const CheckoutPage = () => {
     setStep(3);
     window.scrollTo(0, 0);
     
-    // Créer la commande
     const orderAddress = {
       id: `addr${Date.now()}`,
       street: address,
@@ -64,7 +87,6 @@ const CheckoutPage = () => {
       isDefault: false
     };
     
-    // Enregistrer la commande
     const orderId = addOrder(currentUser!.id, {
       date: new Date(),
       status: 'pending',
@@ -73,7 +95,6 @@ const CheckoutPage = () => {
       deliveryAddress: orderAddress
     });
     
-    // Envoyer la notification
     sendOrderNotification(
       {
         id: orderId,
@@ -93,21 +114,6 @@ const CheckoutPage = () => {
     clearCart();
     navigate('/account/orders');
   };
-
-  // Charger l'adresse enregistrée quand la page est chargée
-  React.useEffect(() => {
-    const savedAddress = localStorage.getItem('userAddress');
-    if (savedAddress) {
-      try {
-        const { address: savedStreet, city: savedCity, zipCode: savedZipCode } = JSON.parse(savedAddress);
-        setAddress(savedStreet || '');
-        setCity(savedCity || '');
-        setZipCode(savedZipCode || '');
-      } catch (error) {
-        console.error('Failed to parse saved address:', error);
-      }
-    }
-  }, []);
 
   return (
     <div className="page-container py-8 animate-fade-in">
@@ -354,14 +360,28 @@ const CheckoutPage = () => {
             <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-subtle">
               <h2 className="text-xl font-bold mb-6 flex items-center">
                 <CreditCard size={20} className="mr-2 text-qwiik-blue" />
-                Méthode de paiement
+                {isStripeSimulation ? 'Simulation de paiement Stripe' : 'Méthode de paiement'}
               </h2>
+              
+              {isStripeSimulation && (
+                <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+                  <p className="font-medium">Mode simulation</p>
+                  <p>Ceci est une simulation du formulaire de paiement Stripe. En production, vous seriez redirigé vers le site sécurisé de Stripe.</p>
+                </div>
+              )}
               
               <Elements stripe={stripePromise}>
                 <StripePaymentForm 
                   amount={total} 
                   onSuccess={handleStripeSuccess}
-                  onCancel={() => setStep(1)}
+                  onCancel={() => {
+                    if (isStripeSimulation) {
+                      navigate('/cart');
+                    } else {
+                      setStep(1);
+                    }
+                  }}
+                  isSimulation={isStripeSimulation}
                 />
               </Elements>
             </div>

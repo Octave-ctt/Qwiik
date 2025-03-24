@@ -1,4 +1,3 @@
-
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
@@ -41,7 +40,7 @@ export const StripeService = {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const sessionId = `cs_test_${Date.now()}`;
-        const url = `/payment/success?session_id=${sessionId}&order_id=order_${Date.now()}`;
+        const url = `/checkout?simulation=true&session_id=${sessionId}`;
         
         return { sessionId, url };
       }
@@ -69,7 +68,7 @@ export const StripeService = {
       console.log('Erreur détectée, utilisation du mode simulation');
       
       const sessionId = `cs_test_${Date.now()}`;
-      const url = `/payment/success?session_id=${sessionId}&order_id=order_${Date.now()}`;
+      const url = `/checkout?simulation=true&session_id=${sessionId}`;
       
       return { sessionId, url };
     }
@@ -87,10 +86,9 @@ export const StripeService = {
     const isDevOrPreview = import.meta.env.DEV || window.location.hostname.includes('lovable');
     
     if (isDevOrPreview) {
-      // En mode développement ou prévisualisation, simuler la redirection
-      console.log('Redirection vers Stripe avec session ID:', sessionId);
-      // Simuler la redirection vers Stripe en redirigeant vers la page de succès
-      window.location.href = `/payment/success?session_id=${sessionId}&order_id=order_${Date.now()}`;
+      // En mode développement ou prévisualisation, rediriger vers la page de checkout locale
+      console.log('Redirection vers simulation Stripe avec session ID:', sessionId);
+      window.location.href = `/checkout?simulation=true&session_id=${sessionId}`;
     } else {
       // En production, rediriger réellement vers Stripe
       const { error } = await stripe.redirectToCheckout({ sessionId });
