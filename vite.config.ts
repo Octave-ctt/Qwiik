@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
+      strategies: 'injectManifest',
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
@@ -39,10 +40,10 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      strategies: 'injectManifest',
-      filename: 'sw.js', // fichier généré (swDest)
+      srcDir: 'src',
+      filename: 'sw.js',
       injectManifest: {
-        swSrc: 'src/custom-sw.js', // fichier source (différent nom)
+        swSrc: './src/custom-sw.js',
         swDest: 'dist/sw.js',
         globDirectory: 'dist',
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],

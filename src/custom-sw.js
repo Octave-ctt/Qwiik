@@ -1,7 +1,7 @@
 
 // Basic service worker for PWA functionality
 self.addEventListener('install', (event) => {
-  console.log('Service worker installed');
+  console.log('Service worker installing...');
   event.waitUntil(
     caches.open('qwiik-v1').then((cache) => {
       return cache.addAll([
@@ -17,7 +17,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service worker activated');
+  console.log('Service worker activating...');
 });
 
 self.addEventListener('fetch', (event) => {
@@ -28,5 +28,5 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// This is required for the injectManifest strategy
+// Cette ligne est OBLIGATOIRE pour l'injection du manifeste
 self.__WB_MANIFEST;
