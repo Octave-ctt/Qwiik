@@ -31,17 +31,15 @@ const RegisterForm: React.FC<{
 
     try {
       await register(email, password, name);
-      toast({
-        title: "Compte créé",
-        description: "Votre compte a été créé avec succès."
-      });
       if (onClose) onClose();
+      
+      // En mode développement, nous fermons la modale après l'inscription réussie
+      if (onSwitchToLogin) {
+        // En production, on pourrait passer au login, mais en développement on peut fermer directement
+        onClose?.();
+      }
     } catch (error: any) {
-      toast({
-        title: "Erreur d'inscription",
-        description: error.message || "Échec de la création du compte. Veuillez réessayer.",
-        variant: "destructive"
-      });
+      // La plupart des erreurs sont gérées dans le contexte Auth
     } finally {
       setIsLoading(false);
     }

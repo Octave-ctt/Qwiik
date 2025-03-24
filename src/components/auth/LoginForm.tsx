@@ -19,17 +19,11 @@ const LoginForm: React.FC<{
 
     try {
       await login(email, password);
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté à votre compte."
-      });
       if (onClose) onClose();
     } catch (error: any) {
-      toast({
-        title: "Erreur de connexion",
-        description: error.message || "Échec de la connexion. Veuillez réessayer.",
-        variant: "destructive"
-      });
+      // La gestion des erreurs est maintenant faite dans le contexte Auth,
+      // donc nous n'avons pas besoin de gérer spécifiquement l'erreur ici.
+      // Si c'est une erreur "Email not confirmed", le login() ne renverra pas d'erreur.
     } finally {
       setIsLoading(false);
     }
