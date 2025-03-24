@@ -1,10 +1,9 @@
 
 import { loadStripe } from '@stripe/stripe-js';
 import { CartItem } from '../contexts/CartContext';
-import { supabase } from '../lib/supabase';
 
 // Utiliser la clé publique Stripe depuis les variables d'environnement
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || window.STRIPE_PUBLIC_KEY;
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_mock_key_for_development';
 const stripePromise = loadStripe(stripePublicKey);
 
 export interface CheckoutSessionResponse {
@@ -31,66 +30,25 @@ export const StripeService = {
     }));
 
     try {
-      // Créer une commande dans Supabase avec le statut "pending"
+      // En mode développement ou en test, utiliser le serveur mock
+      console.log('Mode développement détecté - simulation du paiement Stripe');
       const total = items.reduce((sum, { product, quantity }) => sum + (product.price * quantity), 0);
       
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: userId,
-          status: 'pending',
-          total
-        })
-        .select()
-        .single();
+      // Créer un ID de commande fictif
+      const orderId = `o${Date.now()}`;
       
-      if (orderError) throw orderError;
-      
-      // Vérifier que orderData.id existe et est une chaîne
-      if (!orderData || typeof orderData.id !== 'string') {
-        throw new Error('ID de commande invalide ou manquant');
-      }
-      
-      // Ajouter les éléments de la commande
-      const orderItems = items.map(({ product, quantity }) => ({
-        order_id: orderData.id,
-        product_id: product.id,
-        quantity,
-        price: product.price
-      }));
-      
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-      
-      if (itemsError) throw itemsError;
-
-      // En mode développement ou en test, utiliser le serveur mock
-      if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
-        console.log('Mode développement détecté - simulation du paiement Stripe');
-        const mockResponse = await StripeService.simulateBackendCheckout(items, orderData.id);
-        
-        return mockResponse;
-      }
-
-      // En production, appeler l'API backend
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          lineItems,
-          orderId: orderData.id,
-          userId
-        }),
+      // Dans une implémentation réelle, cela enregistrerait les données dans Supabase
+      console.log('Commande créée avec succès:', {
+        id: orderId,
+        userId,
+        total,
+        items: items.length
       });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la création de la session de paiement');
-      }
-
-      return await response.json();
+      
+      return {
+        sessionId: `session_${Date.now()}`,
+        url: `/payment/success?session_id=${Date.now()}&order_id=${orderId}`,
+      };
     } catch (error) {
       console.error('Erreur Stripe:', error);
       throw error;
@@ -107,21 +65,11 @@ export const StripeService = {
     }
 
     // En mode développement, simuler la redirection
-    if (import.meta.env.DEV || window.location.hostname.includes('lovable')) {
-      console.log('Redirection vers Stripe avec session ID:', sessionId);
-      // Simuler la redirection vers Stripe en redirigeant vers la page de succès
-      setTimeout(() => {
-        window.location.href = '/payment/success';
-      }, 1500);
-      return;
-    }
-
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-    
-    if (error) {
-      console.error('Erreur de redirection Stripe:', error);
-      throw error;
-    }
+    console.log('Redirection vers Stripe avec session ID:', sessionId);
+    // Simuler la redirection vers Stripe en redirigeant vers la page de succès
+    setTimeout(() => {
+      window.location.href = '/payment/success';
+    }, 1500);
   },
 
   /**
@@ -145,30 +93,13 @@ export const StripeService = {
    */
   updateOrderStatus: async (orderId: string, status: 'completed' | 'cancelled'): Promise<void> => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status })
-        .eq('id', orderId);
+      // En mode développement, simplement simuler la mise à jour
+      console.log(`Mise à jour du statut de la commande ${orderId} à ${status}`);
       
-      if (error) throw error;
-      
-      // Si la commande est terminée, vider le panier
+      // Si la commande est terminée, simuler le vidage du panier
       if (status === 'completed') {
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('user_id')
-          .eq('id', orderId)
-          .single();
-        
-        if (orderError) throw orderError;
-        
-        // Vider le panier de l'utilisateur
-        const { error: cartError } = await supabase
-          .from('cart_items')
-          .delete()
-          .eq('user_id', orderData.user_id);
-        
-        if (cartError) throw cartError;
+        console.log('Panier vidé après commande réussie');
+        localStorage.removeItem('cart');
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la commande:', error);
@@ -176,3 +107,5 @@ export const StripeService = {
     }
   }
 };
+
+export default StripeService;

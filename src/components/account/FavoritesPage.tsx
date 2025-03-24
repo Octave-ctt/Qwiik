@@ -14,31 +14,38 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-// Mock function to get all products (temporary solution)
+// Function to get all products 
 const getAllProducts = async () => {
-  // This is a temporary implementation until the real API function is available
-  // It returns mock data that would normally come from the API
+  // Dans une implémentation réelle, ceci ferait un appel API
+  // Pour l'instant, on utilise des données mockées
   return [
     {
       id: "1",
-      name: "Produit 1",
-      price: 99.99,
+      name: "Smartphone Android",
+      price: 349.99,
       image: "/placeholder.svg",
-      category: "Catégorie 1"
+      category: "Tech"
     },
     {
       id: "2",
-      name: "Produit 2",
-      price: 149.99,
+      name: "Écouteurs sans fil",
+      price: 129.99,
       image: "/placeholder.svg",
-      category: "Catégorie 2"
+      category: "Tech"
     },
     {
       id: "3",
-      name: "Produit 3",
+      name: "Tablette 10 pouces",
       price: 199.99,
       image: "/placeholder.svg",
-      category: "Catégorie 1"
+      category: "Tech"
+    },
+    {
+      id: "4",
+      name: "Montre connectée",
+      price: 149.99,
+      image: "/placeholder.svg",
+      category: "Tech"
     }
   ];
 };

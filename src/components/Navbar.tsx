@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, X, Home, ChevronDown, Heart, LogOut } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -13,9 +14,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
 
-// Logo du site - Met à jour avec la nouvelle image
+// Logo du site
 const QwiikLogo: React.FC = () => (
   <div className="flex items-center">
     <img 
@@ -41,6 +41,9 @@ const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { getCartCount } = useContext(CartContext);
@@ -54,12 +57,42 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Mettre le focus sur le champ de recherche quand il s'ouvre
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Fermer la recherche quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchOpen && searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchOpen]);
+
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const searchQuery = formData.get('search') as string;
-    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
+  const toggleSearch = () => {
+    setSearchOpen(!searchOpen);
+    if (!searchOpen) {
+      // Reset query when opening
+      setSearchQuery('');
+    }
   };
 
   const openLoginModal = () => {
@@ -152,6 +185,8 @@ const Navbar: React.FC = () => {
                 <input
                   type="text"
                   name="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher un produit..."
                   className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-qwiik-blue/40 focus:border-transparent text-sm"
                 />
@@ -162,12 +197,37 @@ const Navbar: React.FC = () => {
           {/* Right Navigation */}
           <div className="flex items-center space-x-4">
             {!isMobile && (
-              <Link 
-                to="/search" 
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-              >
-                <Search className="h-5 w-5" />
-              </Link>
+              <div className="relative">
+                <button 
+                  onClick={toggleSearch}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                  aria-label="Rechercher"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
+                
+                {/* Search Overlay */}
+                {searchOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg p-3 border border-gray-100 animate-slide-in">
+                    <form onSubmit={handleSearchSubmit}>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Rechercher un produit..."
+                          className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-qwiik-blue/40 focus:border-transparent text-sm"
+                        />
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Appuyez sur Entrée pour rechercher
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
             )}
             
             {isAuthenticated && (

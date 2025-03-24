@@ -18,6 +18,7 @@ const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const AddressFormPage = lazy(() => import("./pages/AddressFormPage"));
 const ChangePasswordPage = lazy(() => import("./pages/ChangePasswordPage"));
+const FavoritesPage = lazy(() => import("./components/account/FavoritesPage"));
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="account" element={<AccountPage />} />
             <Route path="account/address" element={<AddressFormPage />} />
             <Route path="account/change-password" element={<ChangePasswordPage />} />
+            <Route path="account/favorites" element={<FavoritesPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

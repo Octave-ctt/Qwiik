@@ -2,7 +2,7 @@
 import React from 'react';
 import SearchBar from '../components/SearchBar';
 import FeaturedProducts from '../components/FeaturedProducts';
-import { bestSellers, categories, featuredProducts } from '../utils/data';
+import { bestSellers, categories } from '../utils/data';
 import { ArrowRight } from 'lucide-react';
 
 const Index = () => {
@@ -36,17 +36,10 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Best Sellers Section - Maintenant en premier */}
+      {/* Best Sellers Section */}
       <section className="py-12 gradient-section-3">
         <div className="page-container">
           <FeaturedProducts title="Best-sellers" products={bestSellers} />
-        </div>
-      </section>
-      
-      {/* Featured Products Section */}
-      <section className="py-12 bg-white/80 backdrop-blur-sm">
-        <div className="page-container">
-          <FeaturedProducts title="Nouveautés" products={featuredProducts} />
         </div>
       </section>
       
@@ -101,7 +94,7 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Categories Section - Déplacé en dernier */}
+      {/* Categories Section */}
       <section className="py-12 bg-white/80 backdrop-blur-sm">
         <div className="page-container">
           <h2 className="text-2xl font-bold mb-6">Catégories populaires</h2>
