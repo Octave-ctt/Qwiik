@@ -1,20 +1,28 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Utiliser les valeurs définies dans window (dans main.tsx)
-const supabaseUrl = window.SUPABASE_URL;
-const supabaseAnonKey = window.SUPABASE_ANON_KEY;
+// Fonction d'initialisation du client Supabase
+// Utilise une fonction qui est appelée au moment où nous avons besoin du client
+// plutôt qu'une initialisation immédiate
+const createSupabaseClient = () => {
+  const supabaseUrl = window.SUPABASE_URL;
+  const supabaseAnonKey = window.SUPABASE_ANON_KEY;
 
-// Vérification de la présence des variables Supabase
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Variables Supabase manquantes:', { 
-    supabaseUrl: supabaseUrl ? 'définie' : 'non définie', 
-    supabaseAnonKey: supabaseAnonKey ? 'définie' : 'non définie' 
-  });
-}
+  // Vérification de la présence des variables Supabase
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Variables Supabase manquantes:', { 
+      supabaseUrl: supabaseUrl ? 'définie' : 'non définie', 
+      supabaseAnonKey: supabaseAnonKey ? 'définie' : 'non définie' 
+    });
+    throw new Error("Les variables Supabase ne sont pas définies");
+  }
 
-// Créer le client Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Créer le client Supabase
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
+
+// Exporter le client Supabase à la demande
+export const supabase = createSupabaseClient();
 
 // Types pour la base de données
 export type Database = {
