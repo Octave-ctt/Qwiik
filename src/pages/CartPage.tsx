@@ -1,7 +1,7 @@
 
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard, Beaker } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
 import { AuthContext } from '../contexts/AuthContext';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import AuthModal from '../components/auth/AuthModal';
 
 const CartPage = () => {
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal, addTestProduct } = useContext(CartContext);
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useContext(CartContext);
   const { currentUser, isAuthenticated } = useContext(AuthContext);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -64,35 +64,6 @@ const CartPage = () => {
       toast({
         title: "Erreur de paiement",
         description: "Un problème est survenu lors de la redirection vers la page de paiement. Veuillez réessayer.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Ajouter un produit test et procéder au paiement
-  const handleTestPayment = async () => {
-    if (!isAuthenticated || !currentUser) {
-      setAuthModalOpen(true);
-      return;
-    }
-    
-    try {
-      setIsProcessing(true);
-      
-      // Ajouter le produit test
-      await addTestProduct();
-      
-      // Petite pause pour s'assurer que le panier est mis à jour
-      setTimeout(() => {
-        // Procéder au paiement comme d'habitude
-        handleStripeCheckout();
-      }, 500);
-    } catch (error) {
-      setIsProcessing(false);
-      console.error("Erreur lors du test de paiement:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de préparer le test de paiement.",
         variant: "destructive"
       });
     }
@@ -251,24 +222,12 @@ const CartPage = () => {
                 </Button>
                 
                 {isAuthenticated && (
-                  <>
-                    <Link 
-                      to="/checkout"
-                      className="btn-secondary w-full py-3 flex items-center justify-center space-x-2"
-                    >
-                      <span>Passer à la commande</span>
-                    </Link>
-                    
-                    <Button 
-                      onClick={handleTestPayment}
-                      disabled={isProcessing}
-                      variant="outline"
-                      className="w-full py-3 flex items-center justify-center space-x-2 mt-2"
-                    >
-                      <Beaker size={18} className="text-purple-500" />
-                      <span>Tester avec Price ID fixe</span>
-                    </Button>
-                  </>
+                  <Link 
+                    to="/checkout"
+                    className="btn-secondary w-full py-3 flex items-center justify-center space-x-2"
+                  >
+                    <span>Passer à la commande</span>
+                  </Link>
                 )}
               </div>
               
@@ -287,18 +246,10 @@ const CartPage = () => {
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Parcourez notre catalogue et ajoutez des produits à votre panier pour les commander.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <Link to="/" className="btn-primary">
               Découvrir nos produits
             </Link>
-            <Button 
-              onClick={handleTestPayment}
-              variant="outline"
-              className="flex items-center justify-center space-x-2"
-            >
-              <Beaker size={18} className="text-purple-500" />
-              <span>Tester Price ID Stripe</span>
-            </Button>
           </div>
         </div>
       )}

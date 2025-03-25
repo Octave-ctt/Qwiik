@@ -2,92 +2,12 @@ import { Product } from "../components/ProductCard";
 
 export const products: Product[] = [
   {
-    id: "1",
-    name: "Écouteurs sans fil",
-    price: 49.99,
-    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1000",
-    rating: 4.8,
-    reviewCount: 342,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "2",
-    name: "Bracelet connecté fitness",
-    price: 39.99,
-    image: "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=1000",
-    rating: 4.6,
-    reviewCount: 187,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "3",
-    name: "Crème hydratante visage",
-    price: 34.99,
-    image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?q=80&w=1000",
-    rating: 4.9,
-    reviewCount: 276,
-    deliveryTime: "30 min",
-    category: "beauty"
-  },
-  {
-    id: "4",
-    name: "Lampe de table design",
-    price: 49.99,
-    image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=1000",
-    rating: 4.7,
-    reviewCount: 112,
-    deliveryTime: "30 min",
-    category: "home"
-  },
-  {
     id: "5",
     name: "Google Home Mini",
     price: 29.99,
     image: "https://images.unsplash.com/photo-1512446816042-444d641267d4?q=80&w=1000",
     rating: 4.9,
     reviewCount: 521,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "6",
-    name: "Manette PlayStation 5",
-    price: 59.99,
-    image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=1000",
-    rating: 4.8,
-    reviewCount: 198,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "7",
-    name: "Mini enceinte Bluetooth",
-    price: 19.99,
-    image: "https://images.unsplash.com/photo-1589003077984-894e133dabab?q=80&w=1000",
-    rating: 4.6,
-    reviewCount: 165,
-    deliveryTime: "30 min",
-    category: "tech"
-  },
-  {
-    id: "8",
-    name: "Parfum de luxe homme",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000",
-    rating: 4.9,
-    reviewCount: 289,
-    deliveryTime: "30 min",
-    category: "beauty"
-  },
-  {
-    id: "12",
-    name: "Chargeur sans fil",
-    price: 24.99,
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1000",
-    rating: 4.7,
-    reviewCount: 345,
     deliveryTime: "30 min",
     category: "tech"
   },
@@ -129,8 +49,8 @@ export const searchProducts = (query: string, category: string = 'all'): Product
   );
 };
 
-export const featuredProducts = products.slice(0, 6);
-export const bestSellers = [products[4], products[2], products[0], products[5], products[1], products[7]];
+export const featuredProducts = products.slice(0, 2);
+export const bestSellers = [products[0], products[1]];
 
 export type CartItem = {
   product: Product;
@@ -163,8 +83,6 @@ export type Order = {
   deliveryAddress: Address;
 };
 
-// Les données mockées sont maintenant stockées dans localStorage
-// Initialisons les données au premier chargement si elles n'existent pas
 export const initializeData = () => {
   if (!localStorage.getItem('users')) {
     localStorage.setItem('users', JSON.stringify([]));
@@ -175,7 +93,6 @@ export const initializeData = () => {
   }
 };
 
-// Mock user non plus utilisé directement
 export const mockUser: User = {
   id: "u1",
   email: "user@example.com",
@@ -193,7 +110,6 @@ export const mockUser: User = {
   favorites: []
 };
 
-// Fonctions pour gérer les favoris
 export const addToFavorites = (userId: string, productId: string): boolean => {
   const usersJson = localStorage.getItem('users') || '[]';
   const users = JSON.parse(usersJson);
@@ -209,7 +125,6 @@ export const addToFavorites = (userId: string, productId: string): boolean => {
     users[userIndex].favorites.push(productId);
     localStorage.setItem('users', JSON.stringify(users));
     
-    // Update current user in localStorage if it's the same user
     const currentUserJson = localStorage.getItem('currentUser');
     if (currentUserJson) {
       const currentUser = JSON.parse(currentUserJson);
@@ -241,7 +156,6 @@ export const removeFromFavorites = (userId: string, productId: string): boolean 
     users[userIndex].favorites.splice(favIndex, 1);
     localStorage.setItem('users', JSON.stringify(users));
     
-    // Update current user in localStorage if it's the same user
     const currentUserJson = localStorage.getItem('currentUser');
     if (currentUserJson) {
       const currentUser = JSON.parse(currentUserJson);
@@ -277,7 +191,6 @@ export const isFavorite = (userId: string, productId: string): boolean => {
   return user.favorites.includes(productId);
 };
 
-// Fonctions pour gérer les commandes
 export const addOrder = (userId: string, order: Omit<Order, 'id'>): string => {
   const ordersJson = localStorage.getItem('orders') || '[]';
   const orders = JSON.parse(ordersJson);
@@ -307,7 +220,7 @@ export const getUserOrders = (userId: string): Order[] => {
       const { userId, ...orderData } = order;
       return {
         ...orderData,
-        date: new Date(orderData.date) // Convert date string back to Date object
+        date: new Date(orderData.date)
       };
     });
 };

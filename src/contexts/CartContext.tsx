@@ -17,7 +17,6 @@ type CartContextType = {
   clearCart: () => Promise<void>;
   getCartTotal: () => number;
   getCartCount: () => number;
-  addTestProduct: () => Promise<void>;
 };
 
 export const CartContext = createContext<CartContextType>({
@@ -28,7 +27,6 @@ export const CartContext = createContext<CartContextType>({
   clearCart: async () => {},
   getCartTotal: () => 0,
   getCartCount: () => 0,
-  addTestProduct: async () => {},
 });
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -130,37 +128,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const addTestProduct = async () => {
-    try {
-      const testProduct: Product = {
-        id: 'test-product-stripe',
-        name: 'Produit Test Stripe',
-        description: 'Ce produit utilise un Price ID Stripe prédéfini pour tester le paiement',
-        price: 19.99,
-        image: 'https://via.placeholder.com/300?text=Test+Product',
-        category: 'test',
-        deliveryTime: '30 minutes',
-        stripe_price_id: 'price_1R6VTXBD1jNEQIjBftu8OubN' // Ajout de l'ID de prix Stripe directement ici
-      };
-      
-      await clearCart();
-      
-      setCartItems([{ product: testProduct, quantity: 1 }]);
-      
-      toast({
-        title: "Produit test ajouté",
-        description: "Un produit de test avec le Price ID Stripe spécifique a été ajouté à votre panier."
-      });
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout du produit test:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le produit test au panier.",
-        variant: "destructive"
-      });
-    }
-  };
-  
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   };
@@ -178,8 +145,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateQuantity, 
         clearCart, 
         getCartTotal, 
-        getCartCount,
-        addTestProduct
+        getCartCount
       }}
     >
       {children}
