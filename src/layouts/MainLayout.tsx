@@ -35,7 +35,14 @@ const MainLayout = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="font-bold text-lg mb-4">Qwiik</h3>
+              <div className="flex items-center mb-4">
+                <img 
+                  src="/lovable-uploads/014e3b8a-5658-413c-b8de-8281e290cdc6.png" 
+                  alt="Qwiik Logo" 
+                  className="h-8 w-auto mr-2"
+                />
+                <h3 className="font-bold text-lg">Qwiik</h3>
+              </div>
               <p className="text-gray-600">
                 Livraison rapide de vos produits préférés en 30 minutes.
               </p>

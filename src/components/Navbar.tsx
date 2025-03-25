@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, X, Home, ChevronDown, Heart, LogOut } from 'lucide-react';
@@ -18,7 +19,7 @@ import {
 const QwiikLogo: React.FC = () => (
   <div className="flex items-center">
     <img 
-      src="/lovable-uploads/95e2969d-20e6-4f38-9bce-efefa1554333.png" 
+      src="/lovable-uploads/014e3b8a-5658-413c-b8de-8281e290cdc6.png" 
       alt="Qwiik Logo" 
       className="h-8 w-auto mr-2"
     />

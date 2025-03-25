@@ -13,7 +13,7 @@ const Index = () => {
         <div className="page-container">
           <div className="max-w-2xl mx-auto text-center mb-8">
             <img 
-              src="/lovable-uploads/95e2969d-20e6-4f38-9bce-efefa1554333.png" 
+              src="/lovable-uploads/014e3b8a-5658-413c-b8de-8281e290cdc6.png" 
               alt="Qwiik Logo" 
               className="h-16 mx-auto mb-4"
             />
