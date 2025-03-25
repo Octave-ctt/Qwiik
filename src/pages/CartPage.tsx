@@ -5,7 +5,6 @@ import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard } from 'lucide
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
 import { AuthContext } from '../contexts/AuthContext';
-import { StripeService } from '../services/StripeService';
 import { Button } from '@/components/ui/button';
 import AuthModal from '../components/auth/AuthModal';
 
@@ -26,7 +25,7 @@ const CartPage = () => {
     });
   };
   
-  const handleStripeCheckout = async () => {
+  const handlePayment = async () => {
     if (!isAuthenticated || !currentUser) {
       setAuthModalOpen(true);
       return;
@@ -40,30 +39,15 @@ const CartPage = () => {
         description: "Nous préparons votre commande..."
       });
       
-      // Vérifier la disponibilité du service Stripe avant de l'appeler
-      if (typeof StripeService === 'undefined' || !StripeService.createCheckoutSession) {
-        throw new Error("Le service de paiement n'est pas disponible");
-      }
-      
-      const { url, sessionId } = await StripeService.createCheckoutSession(cartItems, currentUser.id);
-      
-      if (!url) {
-        throw new Error("Impossible d'obtenir l'URL de paiement");
-      }
-      
-      toast({
-        title: "Redirection vers le paiement...",
-        description: "Vous allez être redirigé vers la page de paiement Stripe"
-      });
-      
-      window.location.href = url;
+      // Rediriger vers la page de checkout
+      navigate('/checkout');
       
     } catch (error) {
       setIsProcessing(false);
-      console.error("Erreur lors du checkout:", error);
+      console.error("Erreur lors du paiement:", error);
       toast({
         title: "Erreur de paiement",
-        description: "Un problème est survenu lors de la redirection vers la page de paiement. Veuillez réessayer.",
+        description: "Un problème est survenu. Veuillez réessayer.",
         variant: "destructive"
       });
     }
@@ -209,26 +193,17 @@ const CartPage = () => {
               
               <div className="space-y-3">
                 <Button 
-                  onClick={handleStripeCheckout}
+                  onClick={handlePayment}
                   disabled={isProcessing}
                   className="w-full py-3 flex items-center justify-center space-x-2"
                 >
                   <CreditCard size={18} />
                   <span>
                     {isAuthenticated 
-                      ? (isProcessing ? 'Traitement en cours...' : 'Payer avec Stripe')
+                      ? (isProcessing ? 'Traitement en cours...' : 'Payer')
                       : 'Se connecter pour payer'}
                   </span>
                 </Button>
-                
-                {isAuthenticated && (
-                  <Link 
-                    to="/checkout"
-                    className="btn-secondary w-full py-3 flex items-center justify-center space-x-2"
-                  >
-                    <span>Passer à la commande</span>
-                  </Link>
-                )}
               </div>
               
               <div className="mt-4 text-xs text-center text-gray-500">

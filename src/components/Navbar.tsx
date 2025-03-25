@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, X, Home, ChevronDown, Heart, LogOut } from 'lucide-react';
@@ -156,13 +155,6 @@ const Navbar: React.FC = () => {
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
-
-              <Link 
-                to="/how-it-works"
-                className="nav-link text-sm font-medium"
-              >
-                Comment ça marche
-              </Link>
             </div>
           )}
 
@@ -304,14 +296,6 @@ const Navbar: React.FC = () => {
                   ))}
                 </div>
               </div>
-              
-              <Link 
-                to="/how-it-works"
-                className="block py-2 nav-link font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Comment ça marche
-              </Link>
               
               <div className="pt-4 border-t border-gray-100">
                 {isAuthenticated ? (

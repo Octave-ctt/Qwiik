@@ -51,11 +51,6 @@ const MainLayout = () => {
               <h3 className="font-bold text-lg mb-4">Service client</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">
-                    Comment ça marche
-                  </Link>
-                </li>
-                <li>
                   <Link to="/account" className="text-gray-600 hover:text-gray-900">
                     Mon compte
                   </Link>
