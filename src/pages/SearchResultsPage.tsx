@@ -18,7 +18,7 @@ const SearchResultsPage = () => {
     // Simulate loading delay for a smoother experience
     setIsLoading(true);
     const timeoutId = setTimeout(() => {
-      const results = searchProducts(query, category);
+      const results = searchProducts(query);
       setProducts(results);
       setIsLoading(false);
     }, 300);
