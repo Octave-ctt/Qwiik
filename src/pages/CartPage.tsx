@@ -1,6 +1,6 @@
 
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, CreditCard, Beaker } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CartContext } from '../contexts/CartContext';
@@ -40,7 +40,16 @@ const CartPage = () => {
         description: "Nous préparons votre commande..."
       });
       
+      // Vérifier la disponibilité du service Stripe avant de l'appeler
+      if (typeof StripeService === 'undefined' || !StripeService.createCheckoutSession) {
+        throw new Error("Le service de paiement n'est pas disponible");
+      }
+      
       const { url, sessionId } = await StripeService.createCheckoutSession(cartItems, currentUser.id);
+      
+      if (!url) {
+        throw new Error("Impossible d'obtenir l'URL de paiement");
+      }
       
       toast({
         title: "Redirection vers le paiement...",
@@ -68,6 +77,8 @@ const CartPage = () => {
     }
     
     try {
+      setIsProcessing(true);
+      
       // Ajouter le produit test
       await addTestProduct();
       
@@ -77,6 +88,7 @@ const CartPage = () => {
         handleStripeCheckout();
       }, 500);
     } catch (error) {
+      setIsProcessing(false);
       console.error("Erreur lors du test de paiement:", error);
       toast({
         title: "Erreur",

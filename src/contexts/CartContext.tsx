@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Product } from '../components/ProductCard';
 import { AuthContext } from './AuthContext';
@@ -132,13 +133,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addTestProduct = async () => {
     try {
       const testProduct: Product = {
-        id: 'test',
+        id: 'test-product-stripe',
         name: 'Produit Test Stripe',
         description: 'Ce produit utilise un Price ID Stripe prédéfini pour tester le paiement',
         price: 19.99,
         image: 'https://via.placeholder.com/300?text=Test+Product',
         category: 'test',
-        deliveryTime: '30 minutes'
+        deliveryTime: '30 minutes',
+        stripe_price_id: 'price_1R6VTXBD1jNEQIjBftu8OubN' // Ajout de l'ID de prix Stripe directement ici
       };
       
       await clearCart();
