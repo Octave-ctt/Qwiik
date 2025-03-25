@@ -20,22 +20,6 @@ export const StripeService = {
    * Crée une session de checkout Stripe via la fonction Edge Supabase
    */
   createCheckoutSession: async (items: CartItem[], userId: string): Promise<CheckoutSessionResponse> => {
-    // Formater les produits pour Stripe
-    const lineItems = items.map(({ product, quantity }) => ({
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: product.name,
-          images: [product.image],
-          metadata: {
-            productId: product.id
-          }
-        },
-        unit_amount: Math.round(product.price * 100), // Prix en centimes
-      },
-      quantity,
-    }));
-    
     try {
       console.log('Appel de la fonction Edge Supabase pour créer une session Stripe');
       console.log('URL fonction:', SUPABASE_FUNCTION_URL);
@@ -48,14 +32,40 @@ export const StripeService = {
         console.warn('Aucun token d\'accès disponible pour l\'authentification');
       }
       
-      // Configurer la requête
-      const response = await fetch(SUPABASE_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ 
+      // Déterminer s'il faut utiliser des lineItems dynamiques ou le priceId statique
+      let requestBody;
+      
+      // Si c'est un test avec le priceId spécifique, utiliser mode: 'test'
+      if (items.length === 1 && items[0].product.id === 'test') {
+        requestBody = {
+          mode: 'test',
+          priceId: 'price_1R6VTXBD1jNEQIjBftu8OubN',
+          userId,
+          successUrl: `${window.location.origin}/payment/success`,
+          cancelUrl: `${window.location.origin}/cart`,
+          metadata: {
+            userId,
+            testMode: true
+          }
+        };
+      } else {
+        // Pour les produits normaux, utiliser les lineItems
+        const lineItems = items.map(({ product, quantity }) => ({
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: product.name,
+              images: [product.image],
+              metadata: {
+                productId: product.id
+              }
+            },
+            unit_amount: Math.round(product.price * 100), // Prix en centimes
+          },
+          quantity,
+        }));
+        
+        requestBody = { 
           lineItems,
           userId,
           successUrl: `${window.location.origin}/payment/success`,
@@ -68,7 +78,17 @@ export const StripeService = {
               quantity: item.quantity
             }))
           }
-        }),
+        };
+      }
+      
+      // Configurer la requête
+      const response = await fetch(SUPABASE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(requestBody),
         // Ajouter ces options pour améliorer la compatibilité
         mode: 'cors',
         credentials: 'include'

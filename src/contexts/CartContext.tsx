@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Product } from '../components/ProductCard';
 import { AuthContext } from './AuthContext';
@@ -17,6 +16,7 @@ type CartContextType = {
   clearCart: () => Promise<void>;
   getCartTotal: () => number;
   getCartCount: () => number;
+  addTestProduct: () => Promise<void>;
 };
 
 export const CartContext = createContext<CartContextType>({
@@ -27,6 +27,7 @@ export const CartContext = createContext<CartContextType>({
   clearCart: async () => {},
   getCartTotal: () => 0,
   getCartCount: () => 0,
+  addTestProduct: async () => {},
 });
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -34,9 +35,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { currentUser, isAuthenticated } = useContext(AuthContext);
   const { toast } = useToast();
   
-  // Charger le panier depuis localStorage
   useEffect(() => {
-    // Charger le panier depuis localStorage
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
@@ -48,26 +47,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
   
-  // Sauvegarder le panier dans localStorage quand il change
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
   
   const addToCart = async (product: Product, quantity: number) => {
     try {
-      // Vérifier si le produit est déjà dans le panier
       const existingItemIndex = cartItems.findIndex(item => item.product.id === product.id);
       
       if (existingItemIndex !== -1) {
-        // Mettre à jour la quantité si le produit est déjà dans le panier
         const newQuantity = cartItems[existingItemIndex].quantity + quantity;
-        
-        // Mettre à jour l'état local
         const updatedCartItems = [...cartItems];
         updatedCartItems[existingItemIndex].quantity = newQuantity;
         setCartItems(updatedCartItems);
       } else {
-        // Ajouter un nouveau produit
         setCartItems([...cartItems, { product, quantity }]);
       }
       
@@ -87,7 +80,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const removeFromCart = async (productId: string) => {
     try {
-      // Mettre à jour l'état local
       setCartItems(prevItems => prevItems.filter(item => item.product.id !== productId));
     } catch (error) {
       console.error('Erreur lors de la suppression du panier:', error);
@@ -106,7 +98,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // Mettre à jour l'état local
       setCartItems(prevItems => 
         prevItems.map(item => 
           item.product.id === productId 
@@ -126,16 +117,43 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const clearCart = async () => {
     try {
-      // Mettre à jour l'état local
       setCartItems([]);
-      
-      // Supprimer du localStorage
       localStorage.removeItem('cart');
     } catch (error) {
       console.error('Erreur lors de la suppression du panier:', error);
       toast({
         title: "Erreur",
         description: "Impossible de vider le panier.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const addTestProduct = async () => {
+    try {
+      const testProduct: Product = {
+        id: 'test',
+        name: 'Produit Test Stripe',
+        description: 'Ce produit utilise un Price ID Stripe prédéfini pour tester le paiement',
+        price: 19.99,
+        image: 'https://via.placeholder.com/300?text=Test+Product',
+        category: 'test',
+        deliveryTime: '30 minutes'
+      };
+      
+      await clearCart();
+      
+      setCartItems([{ product: testProduct, quantity: 1 }]);
+      
+      toast({
+        title: "Produit test ajouté",
+        description: "Un produit de test avec le Price ID Stripe spécifique a été ajouté à votre panier."
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du produit test:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le produit test au panier.",
         variant: "destructive"
       });
     }
@@ -158,7 +176,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateQuantity, 
         clearCart, 
         getCartTotal, 
-        getCartCount 
+        getCartCount,
+        addTestProduct
       }}
     >
       {children}
